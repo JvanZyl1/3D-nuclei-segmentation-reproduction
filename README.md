@@ -1,5 +1,3 @@
 # DeepLearningAssignment
 
-# Aral trek a bak
-
-# who puts the repo name in title case that's disgusting
+- [Paper Presentation Slides](https://www.icloud.com/keynote/062utDAAv3aiJ8VWjTMNuFqpw#DL_Paper_Presentation)
