@@ -8,7 +8,7 @@
   - Covielers-Munzi, Ugo (MSc Aerospace Engineering, Control and Simulation)
   - de Moor, Aral (BSc Computer Science)
   - Rogmans, Dani (MSc Computer Science)
-  - van Zyl, Jonathan (MSc Aerospace Engineering, Contreol and Simulation)
+  - van Zyl, Jonathan (MSc Aerospace Engineering, Control and Simulation)
 
 
 # Deep Learning Paper Presentation: The Low-Rank Simplicity Bias in Deep Networks
