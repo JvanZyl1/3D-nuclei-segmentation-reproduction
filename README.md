@@ -1,3 +1,7 @@
+> [!WARNING] 
+> Please do not add `.idea` or empty files to the repository
+
+
 ## An Ensemble Learning and Slice Fusion Strategy for Three-Dimensional Nuclei Instance Segmentation
 Tags: `3D image segmentation`, `Mask R-CNN`, `fluorescense microscopy`, `live cell data`
 
