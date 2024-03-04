@@ -8,6 +8,7 @@ Tags: `3D image segmentation`, `Mask R-CNN`, `fluorescense microscopy`, `live ce
 [`Paper`](https://www.nature.com/articles/s41540-020-00152-8) 
 [`Code`](https://github.com/funalab/QCANet) 
 [`Dataset`](https://bbbc.broadinstitute.org/BBBC050) 
+[`Planning`](./replication/readme.md)
 
 
 Reproducibility Assignment for TU Delft MSc. CS4240 "Deep Learning" (2023/24). Group consists of:
