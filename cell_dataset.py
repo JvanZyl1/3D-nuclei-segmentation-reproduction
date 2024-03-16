@@ -21,7 +21,7 @@ class CellDataset(torch.utils.data.Dataset):
     def __len__(self):
         return len(self.image_paths)
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx):    # this is missing the interpolation and the mirror padding (but I don't think mirror padding is needed)
         image = tifffile.imread(self.image_paths[idx])
         mask = tifffile.imread(self.mask_paths[idx])
 
@@ -32,7 +32,6 @@ class CellDataset(torch.utils.data.Dataset):
         image_max = image.max()
         image = (image - image_min) / (image_max - image_min)
 
-        current_height, current_width = image.shape[1], image.shape[2]
         desired_height, desired_width = 139, 140
         image = DatasetUtils().apply_padding(image, desired_height, desired_width)
         mask = DatasetUtils.apply_padding(mask, desired_height, desired_width)
