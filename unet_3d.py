@@ -160,5 +160,5 @@ class NSN2(nn.Module): # this time with double convolutions to make the code cle
         x8 = self.deconv(x7, x2)
         x9 = self.double_conv_5(x8)
         x10 = self.conv(x9)
-        
+
         return torch.sigmoid(x10)
