@@ -17,6 +17,19 @@ class CBR(nn.Module):
         x = self.cbr_block(x)
         return x
 
+class DoubleConvolution(nn.Module):
+
+    def __init__(self, in_channels, out_channels_first, out_channels, kernel_size, stride, padding):
+        super().__init__()
+        self.double_conv = nn.Sequential(
+            nn.Conv3d(in_channels, out_channels_first, kernel_size, stride, padding),
+            nn.BatchNorm3d(out_channels_first),
+            nn.ReLU(inplace=True),
+            nn.Conv3d(out_channels_first, out_channels, kernel_size, stride, padding),
+            nn.BatchNorm3d(out_channels),
+            nn.ReLU(inplace=True)
+        )
+
 
 class Conv(nn.Module):
 
@@ -78,9 +91,9 @@ class DiceLoss(nn.Module):
         return dice_score
 
 
-class UNet3D(nn.Module):
+class NSN(nn.Module):
     def __init__(self, n_channels, n_classes):
-        super(UNet3D, self).__init__()
+        super(NSN, self).__init__()
         self.n_channels = n_channels
         self.n_classes = n_classes
 
@@ -117,3 +130,35 @@ class UNet3D(nn.Module):
         x15 = self.conv(x14)
         probabilities = torch.sigmoid(x15)
         return probabilities
+
+
+class NSN2(nn.Module): # this time with double convolutions to make the code cleaner
+
+    def __init__(self, n_channels, n_classes):
+        super(NSN2, self).__init__()
+        self.n_channels = n_channels
+        self.n_classes = n_classes
+
+        self.max_pool = MaxPooling(kernel_size=2, stride=2)
+        self.deconv = Deconvolution()
+        self.conv = Conv(in_channels=32, kernel_size=1, stride=1, padding=0, filters=1)
+
+        self.double_conv_1 = DoubleConvolution(n_channels, 16, 32, 3, 1, 1)
+        self.double_conv_2 = DoubleConvolution(32, 32, 64, 3, 1, 1)
+        self.double_conv_3 = DoubleConvolution(64, 64, 128, 3, 1, 1)
+        self.double_conv_4 = DoubleConvolution(192, 64, 64, 3, 1, 1)
+        self.double_conv_5 = DoubleConvolution(96, 32, 32, 3, 1, 1)
+
+    def forward(self, x):
+        x1 = self.double_conv_1(x)
+        x2 = self.max_pool(x1)
+        x3 = self.double_conv_2(x2)
+        x4 = self.max_pool(x3)
+        x5 = self.double_conv_3(x4)
+        x6 = self.deconv(x5, x4)
+        x7 = self.double_conv_4(x6)
+        x8 = self.deconv(x7, x2)
+        x9 = self.double_conv_5(x8)
+        x10 = self.conv(x9)
+        
+        return torch.sigmoid(x10)

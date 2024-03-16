@@ -2,7 +2,7 @@ import os
 import torch
 import torch.optim as optim
 from torch.utils.data import DataLoader
-from unet_3d import UNet3D, DiceLoss
+from unet_3d import NSN, DiceLoss
 from cell_dataset import CellDataset
 from torch.utils.data.dataset import random_split
 
@@ -21,7 +21,7 @@ if __name__ == "__main__":
 
     n_channels = 1
     n_classes = 2
-    model = UNet3D(n_channels, n_classes)
+    model = NSN(n_channels, n_classes)
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model.to(device)
