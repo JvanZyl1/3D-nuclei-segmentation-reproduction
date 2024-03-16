@@ -3,6 +3,7 @@ import torch.nn.functional as F
 import numpy as np
 import os
 import tifffile
+from dataset_utils import DatasetUtils
 
 
 class CellDataset(torch.utils.data.Dataset):
@@ -25,9 +26,16 @@ class CellDataset(torch.utils.data.Dataset):
         mask = tifffile.imread(self.mask_paths[idx])
 
         image = image.astype(np.float32)
+        mask = mask.astype(np.float32)
+
         image_min = image.min()
         image_max = image.max()
         image = (image - image_min) / (image_max - image_min)
+
+        current_height, current_width = image.shape[1], image.shape[2]
+        desired_height, desired_width = 139, 140
+        image = DatasetUtils().apply_padding(image, desired_height, desired_width)
+        mask = DatasetUtils.apply_padding(mask, desired_height, desired_width)
 
         image = torch.from_numpy(image)
         mask = torch.from_numpy(mask)
@@ -37,8 +45,15 @@ class CellDataset(torch.utils.data.Dataset):
         if len(mask.shape) == 3:
             mask = mask.unsqueeze(0)
 
-        pad_size = (self.padding, self.padding, self.padding, self.padding, self.padding, self.padding)
-        image = F.pad(image, pad=pad_size, mode='reflect')
-        mask = F.pad(mask, pad=pad_size, mode='reflect')
-
         return image, mask
+
+
+if __name__ == "__main__":
+    images_dir = os.path.join("data", "images", "train", "Images")
+    ground_truth_dir = os.path.join("data", "GroundTruth", "train", "GroundTruth_NDN")
+
+    dataset = CellDataset(images_dir=images_dir, masks_dir=ground_truth_dir)
+    print(dataset.__len__())
+    max_h, max_w = 0, 0
+    for i in range(dataset.__len__()):
+        item = dataset.__getitem__(i)
