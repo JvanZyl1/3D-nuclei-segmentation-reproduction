@@ -1,4 +1,14 @@
 
+#### Todos 
+> Add the things you already did here too so we can keep track of them. 
+
+- [ ] Preprocessing steps to the image (interpolation and mirror padding)
+- [ ] All the metrics described in metrics.py
+- [ ] Water-based marker shed for semantic segmentation
+- [ ] Visualizing the training and test error per epoch
+- [ ] Visualizing inference on cells
+- [ ] Quantitative observations about the inferred cells
+
 
 #### Planning
 Four Criteria:

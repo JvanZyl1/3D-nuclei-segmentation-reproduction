@@ -1,13 +1,9 @@
+import os, tifffile, numpy as np
+
 import torch
 import torch.nn.functional as F
-import torch.optim as optim
-from torch.utils.data import DataLoader
-import matplotlib.pyplot as plt
-import numpy as np
-import os
-import tifffile
 
-from unet_3d import UNet3D
+from dataset_utils import DatasetUtils
 
 
 class CellDataset(torch.utils.data.Dataset):
@@ -25,15 +21,20 @@ class CellDataset(torch.utils.data.Dataset):
     def __len__(self):
         return len(self.image_paths)
 
-    def __getitem__(self, idx):
-        # on top of that, add potentially resizing and add (for sure) interpolation for the x/y/z mismatch
+    def __getitem__(self, idx):    # this is missing the interpolation and the mirror padding (but I don't think mirror padding is needed)
         image = tifffile.imread(self.image_paths[idx])
         mask = tifffile.imread(self.mask_paths[idx])
 
         image = image.astype(np.float32)
+        mask = mask.astype(np.float32)
+
         image_min = image.min()
         image_max = image.max()
         image = (image - image_min) / (image_max - image_min)
+
+        desired_height, desired_width = 139, 140
+        image = DatasetUtils().apply_padding(image, desired_height, desired_width)
+        mask = DatasetUtils.apply_padding(mask, desired_height, desired_width)
 
         image = torch.from_numpy(image)
         mask = torch.from_numpy(mask)
@@ -43,34 +44,11 @@ class CellDataset(torch.utils.data.Dataset):
         if len(mask.shape) == 3:
             mask = mask.unsqueeze(0)
 
-        image = F.pad(image, pad=(0, 0, self.padding, self.padding), mode='reflect')
-        mask = F.pad(mask, pad=(0, 0, self.padding, self.padding), mode='reflect')
-
         return image, mask
 
-    def display_single_frame(self, idx, frame_number=25):
-        """
-        :param idx: index of the 3d volume in the dataset we want to display
-        :param frame_number: out of the stack of frames, which frame index we would like to show (default: 25)
-        """
-        image, _ = self.__getitem__(idx)
-        frame = image[0, frame_number, :, :]
-
-        plt.imshow(frame, cmap='gray')
-        plt.title('Frame 25')
-        plt.axis('off')
-        plt.show()
-
-    def display_stacked(self, idx):
-        image, _ = self.__getitem__(idx)
-        mip_image = torch.max(image, dim=1).values.squeeze()
-
-        mip_image_np = mip_image.cpu().detach().numpy()
-
-        plt.imshow(mip_image_np, cmap='gray')
-        plt.title('Maximum Intensity Projection')
-        plt.axis('off')
-        plt.show()
+    def __iter__(self):
+        for i in len(self):
+            yield self[i]
 
 
 if __name__ == "__main__":
@@ -78,20 +56,8 @@ if __name__ == "__main__":
     ground_truth_dir = os.path.join("data", "GroundTruth", "train", "GroundTruth_NDN")
 
     dataset = CellDataset(images_dir=images_dir, masks_dir=ground_truth_dir)
-    dataloader = DataLoader(dataset, batch_size=1, shuffle=True)
-    # tensors are of different dimensions and this needs to be fixed
-
-    n_channels = 1
-    n_classes = 2
-
-    model = UNet3D(n_channels, n_classes)
-    model.train()
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
-    for i, data in enumerate(dataloader):
-        inputs, labels = data
-        inputs, labels = inputs.to(device), labels.to(device)
-        outputs = model(inputs)
-        break
-
-
+    print(len(dataset))
+    max_h, max_w = 0, 0
+    
+    # fixed ur dataset 
+    items = [item for item in dataset]

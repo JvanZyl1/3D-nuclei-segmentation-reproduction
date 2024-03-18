@@ -1,11 +1,11 @@
-import os
-import torch
-import torch.optim as optim
+import os, torch, torch.optim as optim
+
 from torch.utils.data import DataLoader
+from torch.utils.data.dataset import random_split
+
 from unet_3d import NSN, NDN
 from metrics import DiceLoss
 from cell_dataset import CellDataset
-from torch.utils.data.dataset import random_split
 
 
 def run_training_loop(images_dir, ground_truth_dir, criterion, optimizer, num_epochs, model):
