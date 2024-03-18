@@ -3,6 +3,7 @@ import os, tifffile, numpy as np
 import torch
 import torch.nn.functional as F
 
+from pprint import pprint 
 from dataset_utils import DatasetUtils
 
 
@@ -47,7 +48,7 @@ class CellDataset(torch.utils.data.Dataset):
         return image, mask
 
     def __iter__(self):
-        for i in len(self):
+        for i in range(len(self)):
             yield self[i]
 
 
@@ -60,4 +61,11 @@ if __name__ == "__main__":
     max_h, max_w = 0, 0
     
     # fixed ur dataset 
-    items = [item for item in dataset]
+    items = [item for item in dataset]  # load the entire thing into memory
+    for item in items[-5:]:             # let's print the last 5
+
+        image, mask = item 
+        # pprint is a python built-in for fixing dictionary printing
+        pprint({'image': image.shape, 'mask': mask.shape})
+        # but it's not really necessary here as the dict is small...
+        # (dict joke)
