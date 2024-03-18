@@ -17,6 +17,7 @@ class CBR(nn.Module):
         x = self.cbr_block(x)
         return x
 
+
 class DoubleConvolution(nn.Module):
 
     def __init__(self, in_channels, out_channels_first, out_channels, kernel_size, stride, padding):
@@ -29,6 +30,10 @@ class DoubleConvolution(nn.Module):
             nn.BatchNorm3d(out_channels),
             nn.ReLU(inplace=True)
         )
+
+    def forward(self, x):
+        x = self.double_conv(x)
+        return x
 
 
 class Conv(nn.Module):
@@ -75,69 +80,11 @@ class Deconvolution(nn.Module):
         return x
 
 
-class DiceLoss(nn.Module):
+class NSN(nn.Module):  # this time with double convolutions to make the code cleaner
 
-    def __init__(self):
-        super().__init__()
-
-    def forward(self, predictions, targets):
-        smooth = 1e-6
-
-        intersection = torch.sum(predictions * targets)
-
-        dice_score = (2. * intersection + smooth) / (
-                torch.sum(predictions) + torch.sum(targets) + smooth)
-
-        return dice_score
-
-
-class NSN(nn.Module):
-    def __init__(self, n_channels, n_classes):
+    def __init__(self, n_channels):
         super(NSN, self).__init__()
         self.n_channels = n_channels
-        self.n_classes = n_classes
-
-        self.max_pool = MaxPooling(kernel_size=2, stride=2)
-        self.deconv = Deconvolution()
-
-        self.cbr_1 = CBR(in_channels=n_channels, kernel_size=3, stride=1, padding=1, filters=16)
-        self.cbr_2 = CBR(in_channels=16, kernel_size=3, stride=1, padding=1, filters=32)
-        self.cbr_3 = CBR(in_channels=32, kernel_size=3, stride=1, padding=1, filters=32)
-        self.cbr_4 = CBR(in_channels=32, kernel_size=3, stride=1, padding=1, filters=64)
-        self.cbr_5 = CBR(in_channels=64, kernel_size=3, stride=1, padding=1, filters=64)
-        self.cbr_6 = CBR(in_channels=64, kernel_size=3, stride=1, padding=1, filters=128)
-        self.cbr_7 = CBR(in_channels=192, kernel_size=3, stride=1, padding=1, filters=64)
-        self.cbr_8 = CBR(in_channels=64, kernel_size=3, stride=1, padding=1, filters=64)
-        self.cbr_9 = CBR(in_channels=96, kernel_size=3, stride=1, padding=1, filters=32)
-        self.cbr_10 = CBR(in_channels=32, kernel_size=3, stride=1, padding=1, filters=32)
-        self.conv = Conv(in_channels=32, kernel_size=1, stride=1, padding=0, filters=1)
-
-    def forward(self, x):
-        x1 = self.cbr_1(x)
-        x2 = self.cbr_2(x1)
-        x3 = self.max_pool(x2)
-        x4 = self.cbr_3(x3)
-        x5 = self.cbr_4(x4)
-        x6 = self.max_pool(x5)
-        x7 = self.cbr_5(x6)
-        x8 = self.cbr_6(x7)
-        x9 = self.deconv(x8, x5)
-        x10 = self.cbr_7(x9)
-        x11 = self.cbr_8(x10)
-        x12 = self.deconv(x11, x2)
-        x13 = self.cbr_9(x12)
-        x14 = self.cbr_10(x13)
-        x15 = self.conv(x14)
-        probabilities = torch.sigmoid(x15)
-        return probabilities
-
-
-class NSN2(nn.Module): # this time with double convolutions to make the code cleaner
-
-    def __init__(self, n_channels, n_classes):
-        super(NSN2, self).__init__()
-        self.n_channels = n_channels
-        self.n_classes = n_classes
 
         self.max_pool = MaxPooling(kernel_size=2, stride=2)
         self.deconv = Deconvolution()
@@ -157,8 +104,50 @@ class NSN2(nn.Module): # this time with double convolutions to make the code cle
         x5 = self.double_conv_3(x4)
         x6 = self.deconv(x5, x4)
         x7 = self.double_conv_4(x6)
-        x8 = self.deconv(x7, x2)
+        x8 = self.deconv(x7, x1)
         x9 = self.double_conv_5(x8)
         x10 = self.conv(x9)
 
         return torch.sigmoid(x10)
+
+
+class NDN(nn.Module):
+
+    def __init__(self, n_channels):
+        super(NDN, self).__init__()
+
+        self.max_pool = MaxPooling(kernel_size=2, stride=2)
+        self.deconv = Deconvolution()
+        self.conv = Conv(in_channels=24, kernel_size=1, stride=1, padding=0, filters=1)
+
+        self.double_conv_1 = DoubleConvolution(n_channels, 12, 24, 5, 1, 1)
+        self.double_conv_2 = DoubleConvolution(24, 24, 48, 5, 1, 1)
+        self.double_conv_3 = DoubleConvolution(48, 48, 96, 5, 1, 1)
+        self.double_conv_4 = DoubleConvolution(96, 96, 192, 5, 1, 1)
+        self.double_conv_5 = DoubleConvolution(192, 192, 384, 5, 1, 1)
+        self.double_conv_6 = DoubleConvolution(576, 192, 192, 5, 1, 1)
+        self.double_conv_7 = DoubleConvolution(288, 96, 96, 5, 1, 1)
+        self.double_conv_8 = DoubleConvolution(144, 48, 48, 5, 1, 1)
+        self.double_conv_9 = DoubleConvolution(72, 24, 24, 5, 1, 1)
+
+    def forward(self, x):  # can't chain max pool and double conv because the output of double conv is needed
+        x1 = self.double_conv_1(x)
+        x2 = self.max_pool(x1)
+        x3 = self.double_conv_2(x2)
+        x4 = self.max_pool(x3)
+        x5 = self.double_conv_3(x4)
+        x6 = self.max_pool(x5)
+        x7 = self.double_conv_4(x6)
+        x8 = self.max_pool(x7)
+        x9 = self.double_conv_5(x8)
+        x10 = self.deconv(x9, x7)
+        x11 = self.double_conv_6(x10)
+        x12 = self.deconv(x11, x5)
+        x13 = self.double_conv_7(x12)
+        x14 = self.deconv(x13, x3)
+        x15 = self.double_conv_8(x14)
+        x16 = self.deconv(x15, x1)
+        x17 = self.double_conv_9(x16)
+        x18 = self.conv(x17)
+
+        return torch.sigmoid(x18)
