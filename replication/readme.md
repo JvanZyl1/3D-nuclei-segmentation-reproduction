@@ -4,7 +4,7 @@
 
 - [ ] Preprocessing steps to the image (interpolation and mirror padding)
 - [x] (Aral; done but not tested) All the metrics described in metrics.py 
-- [ ] Water-based marker shed for semantic segmentation
+- [ ] Water-based marker shed for instance segmentation
 - [ ] Visualizing the training and test error per epoch
 - [ ] Visualizing inference on cells
 - [ ] Quantitative observations about the inferred cells
