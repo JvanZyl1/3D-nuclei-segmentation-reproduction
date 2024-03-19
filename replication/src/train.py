@@ -21,7 +21,9 @@ def run_training_loop(images_dir, ground_truth_dir, criterion, optimizer, num_ep
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model.to(device)
 
-    for epoch in range(num_epochs):
+    train_loss_per_epoch, val_loss_per_epoch = [], []
+
+    for epoch in range(1, num_epochs + 1):
         print("epoch: " + str(epoch))
 
         model.train()
@@ -36,6 +38,7 @@ def run_training_loop(images_dir, ground_truth_dir, criterion, optimizer, num_ep
             optimizer.step()
             running_loss += loss.item()
         epoch_loss = running_loss / len(train_dataloader)
+        train_loss_per_epoch.append(epoch_loss)
         print(f'Train - Epoch {epoch + 1}/{num_epochs}, Loss: {epoch_loss:.4f}')
 
         model.eval()
@@ -47,14 +50,18 @@ def run_training_loop(images_dir, ground_truth_dir, criterion, optimizer, num_ep
                 loss = criterion(outputs, labels)
                 eval_loss += loss.item()
         eval_loss /= len(eval_dataloader)
+        val_loss_per_epoch.append(eval_loss)
         print(f'Eval - Epoch {epoch + 1}/{num_epochs}, Loss: {eval_loss:.4f}')
 
     print('Finished Training')
 
+    return train_loss_per_epoch, val_loss_per_epoch
+
 
 def train_ndn():
     images_dir = os.path.join("data", "images", "train", "Images")
-    ground_truth_dir = os.path.join("data", "GroundTruth", "train", "GroundTruth_NDN") # ndn is getting downsampeld too much from kernel size = 5
+    ground_truth_dir = os.path.join("data", "GroundTruth", "train",
+                                    "GroundTruth_NDN")  # ndn is getting downsampeld too much from kernel size = 5
 
     n_channels = 1
     model = NDN(n_channels)
@@ -65,6 +72,7 @@ def train_ndn():
     num_epochs = 10
 
     run_training_loop(images_dir, ground_truth_dir, criterion, optimizer, num_epochs, model)
+
 
 def train_nsn():
     images_dir = os.path.join("data", "images", "train", "Images")
@@ -78,8 +86,21 @@ def train_nsn():
     optimizer = optim.SGD(model.parameters(), lr=learning_rate)
     num_epochs = 10
 
-    run_training_loop(images_dir, ground_truth_dir, criterion, optimizer, num_epochs, model)
+    return run_training_loop(images_dir, ground_truth_dir, criterion, optimizer, num_epochs, model)
+
+def plot_train_val_loss(train_loss, val_loss):
+    epochs = range(1, len(train_loss) + 1)
+
+    plt.figure(figsize=(10, 6))
+    plt.plot(epochs, train_loss, 'bo-', label='Training loss')
+    plt.plot(epochs, val_loss, 'r*-', label='Validation loss')
+    plt.title('Training and validation loss')
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.legend()
+
+    plt.show()
 
 
 if __name__ == "__main__":
-    train_nsn()
+    train_loss, val_loss = train_nsn()
