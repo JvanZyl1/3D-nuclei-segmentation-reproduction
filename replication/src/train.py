@@ -2,6 +2,7 @@ import os, torch, torch.optim as optim
 
 from torch.utils.data import DataLoader
 from torch.utils.data.dataset import random_split
+import matplotlib.pyplot as plt
 
 from unet_3d import NSN, NDN
 from metrics import DiceLoss
