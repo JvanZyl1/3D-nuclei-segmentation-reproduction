@@ -1,6 +1,14 @@
-
 #### Todos 
 > Add the things you already did here too so we can keep track of them. 
+
+So far done:
+
+- Dataset class in Pytorch: some preprocessing steps and normalization but we need interpolation and padding
+- NSN network: correct architecture and training loop but we need to train it and save the weights
+- NDN network: correct architecture and training loop but it shrinks the depth too much at deeper layers (will be fixed with padding)
+- Metrics: implemented but not tested
+
+To do:
 
 - [ ] Preprocessing steps to the image (interpolation and mirror padding)
 - [x] (Aral; done but not tested) All the metrics described in metrics.py 
