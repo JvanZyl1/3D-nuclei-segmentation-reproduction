@@ -18,6 +18,12 @@ To do:
 - [ ] Quantitative observations about the inferred cells
 - [ ] Training early stopping criterion: "The trained model with the highest IoU in cross-validation was used to analyse the test dataset" (p. 2). 
 
+#### TA Meeting
+Deliverables 
+- Blog post indicating approach, difficulties in reproducing, comparison with paper results; and explain differences. 
+- Poster presentation
+
+- Contact supervisor about data format; need a few labelled ground truths as well probably. 
 
 #### Planning
 Four Criteria:
