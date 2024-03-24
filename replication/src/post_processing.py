@@ -10,12 +10,17 @@ instance segmentation.
 '''
 
 from cell_dataset import PreProcessCellDataset
+import os
+import torch
+import scipy
+import tifffile
+
 
 class PostProcessing():
-    def __init__(self, image_path, mask_path):
+    def __init__(self, image, mask):
         # Initialise image and mask
-        dataset = PreProcessCellDataset(image_path, mask_path)
-        self.image, self.mask = dataset.__getitem__(0)
+        self.image = image
+        self.mask = mask
 
     def reinterpolation(self, image, type='cubic'):
         """
@@ -39,11 +44,9 @@ class PostProcessing():
         """
         # 1) Find the bounding box of the mask
         # Remove the extras 
-        image_augmented = self.image
+        image_augmented = path_image  # use the path_image string instead of self.image
         mask_augmented = self.mask
-        image_original = image_augmented.split('_')[:2] # remove _flipped etc
-        path_original_image = path_original_image.replace("data_augmented", "data")
-        path_original_image = path_original_image + '/' + image_original + '.tif'
+        path_original_image = path_image.replace("data_augmented", "data")
 
         # Find dimensions of the original image
         image = tifffile.imread(path_original_image)
@@ -55,7 +58,16 @@ class PostProcessing():
         # image_padding = mask_padding
 
         # Find the padding
-        padding = (image_augmented_shape - image_original_shape) / 2
+        image_augmented_y = image_augmented_shape[2]
+        image_augmented_x = image_augmented_shape[3]
+        image_original_y = image_original_shape[1]
+        image_original_x = image_original_shape[2]
+
+        padding_y = (image_augmented_y - image_original_y) / 2
+        padding_x = (image_augmented_x - image_original_x) / 2
+        padding = (int(padding_y), int(padding_x))
+
+        print(image_augmented.shape, mask_augmented.shape, padding_y, padding_x)
 
         # Crop the image and mask to the bounding box
         image_deaugmented = image_augmented[padding[0]:-padding[0], padding[1]:-padding[1]]
@@ -88,21 +100,29 @@ class PostProcessing():
         # Save the image in a folder : data_post_processed\ .... same as the original folder
         new_image_folder_name = path_image.replace("data_augmented", "data_post_processed")
         new_mask_folder_name = path_mask.replace("data_augmented", "data_post_processed")
-
+        os.makedirs(new_image_folder_name, exist_ok=True)
+        os.makedirs(new_mask_folder_name, exist_ok=True)
+        # Loop over each .tif image and mask in the folder
+        image_files = os.listdir(path_image)
+        mask_files = os.listdir(path_mask)
         idx = 0
-        for image, mask in zip(path_image, path_mask):
-            self.image = image
-            self.mask = mask
-            image, mask = self.post_processing(self.image, self.mask, path_image)
+        for image_file, mask_file in zip(image_files, mask_files):
+            image_path = os.path.join(path_image, image_file)
+            mask_path = os.path.join(path_mask, mask_file)
+            self.image = tifffile.imread(image_path)
+            self.mask = tifffile.imread(mask_path)
+            image, mask = self.post_processing(self.image, self.mask, image_path)
             # Save the image and mask in the new folder
-            tifffile.imwrite(new_image_folder_name, image.numpy())
-            tifffile.imwrite(new_mask_folder_name, mask.numpy())
+            tifffile.imwrite(new_image_folder_name, image)
+            tifffile.imwrite(new_mask_folder_name, mask)
             print(idx)
             idx += 1
             
 if __name__ == "__main__":
-    path_image = 'data_augmented\Images\train\Images'
-    path_mask = 'data_augmented\GroundTruth\train\GroundTruth_NSN'
-    post_processing = PostProcessing()
+    path_image = os.path.join('data_augmented', 'Images', 'train', 'Images')
+    path_mask = os.path.join('data_augmented', 'GroundTruth', 'train', 'GroundTruth_NSN')
+    # Initial image and mask from folders
+    image_initial = tifffile.imread(os.path.join(path_image, 'Emb01_t001.tif'))
+    mask_initial = tifffile.imread(os.path.join(path_mask, 'Emb01_t001.tif'))
+    post_processing = PostProcessing(image_initial, mask_initial)
     post_processing.folder_post_processing(path_image, path_mask)
-
