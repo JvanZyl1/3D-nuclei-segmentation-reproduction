@@ -259,28 +259,27 @@ if __name__ == "__main__":
     run create_preprocessing_images() to create new folder 'data_augmented' with preprocessed images
     leave commented out otherwise will run each time
     """
-    """
-    #create_preprocessing_images()
-    images_dir = os.path.join("data_augmented", "images", "train", "Images")
-    ground_truth_dir = os.path.join("data_augmented", "GroundTruth", "train", "GroundTruth_NDN")
-    dataset_pre = PreProcessCellDataset(images_dir=images_dir, masks_dir=ground_truth_dir)
-    print(len(dataset_pre))
-
-    items = [item for item in dataset_pre]
-    for item in items[-1:]:
-        image, mask = item
-        pprint({'image': image.shape, 'mask': mask.shape})
-        dataset_pre.print_image_3D(mask)
-        dataset_pre.print_image_3D(image)
-        """
-
     
+    #create_preprocessing_images()
 
     ############################################################################################################
     ##Following code is just to print an example image and mask (IGNORE)
-    print_example_image = True
+    print_example_image = False
     if print_example_image:
+        print("PRINTING PREPROCESSED IMAGE AND MASK")
+        images_dir = os.path.join("data_augmented", "images", "train", "Images")
+        ground_truth_dir = os.path.join("data_augmented", "GroundTruth", "train", "GroundTruth_NDN")
+        dataset_pre = PreProcessCellDataset(images_dir=images_dir, masks_dir=ground_truth_dir)
+        print(len(dataset_pre))
+
+        items = [item for item in dataset_pre]
+        for item in items[-1:]:
+            image, mask = item
+            pprint({'image': image.shape, 'mask': mask.shape})
+            dataset_pre.print_image_3D(mask)
+            dataset_pre.print_image_3D(image)
         
+        print("PRINTING ORIGINAL IMAGE AND MASK")
         images_dir = os.path.join("data", "images", "train", "Images")
         ground_truth_dir = os.path.join("data", "GroundTruth", "train", "GroundTruth_NDN")
         dataset = CellDataset(images_dir=images_dir, masks_dir=ground_truth_dir)
@@ -303,6 +302,7 @@ if __name__ == "__main__":
             verif_aug = True
             # Display each image in images and visually verify that the augmentation is correct
             if verif_aug:
+                print("PRINTING AUGMENTED IMAGES AND MASKS")
                 for i in range(len(images_augmented)):
                     dataset.print_image_3D(images_augmented[i])
                     #dataset.print_image(masks_augmented[i])

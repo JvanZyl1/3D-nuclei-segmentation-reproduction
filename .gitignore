@@ -160,3 +160,4 @@ cython_debug/
 
 ##ignore dataset_augmented file
 data_augmented/
+data_augmented_small/

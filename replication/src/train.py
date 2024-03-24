@@ -6,21 +6,22 @@ import matplotlib.pyplot as plt
 
 from unet_3d import NSN, NDN
 from metrics import DiceLoss
-from cell_dataset import CellDataset
+from cell_dataset import CellDataset, PreProcessCellDataset
 
 
 def run_training_loop(images_dir, ground_truth_dir, criterion, optimizer, num_epochs, model):
-    dataset = CellDataset(images_dir=images_dir, masks_dir=ground_truth_dir)
+    dataset = PreProcessCellDataset(images_dir=images_dir, masks_dir=ground_truth_dir)
 
     train_size = int(0.8 * len(dataset))
     eval_size = len(dataset) - train_size
     train_dataset, eval_dataset = random_split(dataset, [train_size, eval_size])
 
-    train_dataloader = DataLoader(train_dataset, batch_size=2, shuffle=True)
-    eval_dataloader = DataLoader(eval_dataset, batch_size=2, shuffle=False)
+    train_dataloader = DataLoader(train_dataset, batch_size=1, shuffle=True)
+    eval_dataloader = DataLoader(eval_dataset, batch_size=1, shuffle=False)
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model.to(device)
+
 
     train_loss_per_epoch, val_loss_per_epoch = [], []
 
@@ -57,6 +58,7 @@ def run_training_loop(images_dir, ground_truth_dir, criterion, optimizer, num_ep
     print('Finished Training')
 
     return train_loss_per_epoch, val_loss_per_epoch
+
 
 
 def train_ndn():
@@ -101,6 +103,6 @@ def plot_train_val_loss(train_loss, val_loss):
 
 
 if __name__ == "__main__":
-    images_dir = os.path.join("data_augmented", "Images", "train", "Images")
-    ground_truth_dir = os.path.join("data_augmented", "GroundTruth", "train", "GroundTruth_NSN")
+    images_dir = os.path.join("data_augmented_small", "Images", "train", "Images")
+    ground_truth_dir = os.path.join("data_augmented_small", "GroundTruth", "train", "GroundTruth_NSN")
     train_loss, val_loss = train_nsn(images_dir=images_dir, ground_truth_dir=ground_truth_dir)
