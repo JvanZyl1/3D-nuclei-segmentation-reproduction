@@ -122,14 +122,25 @@ class CellDataset(torch.utils.data.Dataset):
         masks = [mask, mask_flipped_x, mask_flipped_y, mask_flipped_xy]
         return images, masks
 
-
+def find_folder_paths():
+    ##iterates through all subfolders in data directory and makes list of path names
+    data_image_dir = os.path.join('data', 'Images')
+    data_gt_dir = os.path.join('data', 'GroundTruth')
+    image_paths = []    
+    gt_paths = []
+    for root, dirs, files in os.walk(data_image_dir):
+        if not dirs:  # If the current directory has no subdirectories
+            image_paths.append(root) 
+    for root, dirs, files in os.walk(data_gt_dir):
+        if not dirs:  # If the current directory has no subdirectories
+            gt_paths.append(root)
+    return image_paths, gt_paths
 
 
 
 if __name__ == "__main__":
     images_dir = os.path.join("data", "images", "train", "Images")
     ground_truth_dir = os.path.join("data", "GroundTruth", "train", "GroundTruth_NDN")
-
     dataset = CellDataset(images_dir=images_dir, masks_dir=ground_truth_dir)
     print(len(dataset))
     max_h, max_w = 0, 0
