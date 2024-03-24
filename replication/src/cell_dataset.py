@@ -19,12 +19,13 @@ class PreProcessCellDataset(torch.utils.data.Dataset):
         self.mask_paths = sorted([os.path.join(masks_dir, f) for f in os.listdir(masks_dir) if f.endswith('.tif')])
 
         assert len(self.image_paths) == len(self.mask_paths), "The number of images and masks must be the same"
+        assert self.check_images_same_size(), "Images are not the same size"
     
     def __len__(self):
         return len(self.image_paths)
     
     def __getitem__(self, idx):
-        ##do the same as in CellDataset but without the interpolation and mirror padding
+        ##do the same as in CellDataset but without the preprocessing
         image = tifffile.imread(self.image_paths[idx])
         mask = tifffile.imread(self.mask_paths[idx])
 
@@ -44,6 +45,22 @@ class PreProcessCellDataset(torch.utils.data.Dataset):
     def __iter__(self):
         for i in range(len(self)):
             yield self[i]
+
+    ##check images same size
+    def check_images_same_size(self):
+        prev_image_name = None
+        for i in range(len(self)):
+            image, mask = self[i]
+            image_name = self.image_paths[i]
+            if i == 0:
+                max_h, max_w = image.shape[1], image.shape[2]
+                prev_image_name = image_name
+            else:
+                if image.shape[1] != max_h or image.shape[2] != max_w:
+                    print(f"Images are not the same size: {prev_image_name} and {image_name}")
+                    return False
+                prev_image_name = image_name
+        return True
 
     def print_image(self, image, slice_index=0):
         if len(image.shape) == 4:
@@ -95,11 +112,11 @@ class CellDataset(torch.utils.data.Dataset):
         mask_max = mask.max()
         mask = (mask - mask_min) / (mask_max - mask_min)
 
-        """
-        desired_height, desired_width = 139, 140
+        
+        desired_height, desired_width = 140, 140
         image = DatasetUtils().apply_padding(image, desired_height, desired_width)
         mask = DatasetUtils.apply_padding(mask, desired_height, desired_width)
-        """
+        
         image = torch.from_numpy(image)
         mask = torch.from_numpy(mask)
 
@@ -242,24 +259,26 @@ if __name__ == "__main__":
     run create_preprocessing_images() to create new folder 'data_augmented' with preprocessed images
     leave commented out otherwise will run each time
     """
+    """
     #create_preprocessing_images()
     images_dir = os.path.join("data_augmented", "images", "train", "Images")
     ground_truth_dir = os.path.join("data_augmented", "GroundTruth", "train", "GroundTruth_NDN")
-    dataset = PreProcessCellDataset(images_dir=images_dir, masks_dir=ground_truth_dir)
-    print(len(dataset))
+    dataset_pre = PreProcessCellDataset(images_dir=images_dir, masks_dir=ground_truth_dir)
+    print(len(dataset_pre))
 
-    items = [item for item in dataset]
+    items = [item for item in dataset_pre]
     for item in items[-1:]:
         image, mask = item
         pprint({'image': image.shape, 'mask': mask.shape})
-        dataset.print_image_3D(mask)
-        dataset.print_image_3D(image)
+        dataset_pre.print_image_3D(mask)
+        dataset_pre.print_image_3D(image)
+        """
 
     
 
     ############################################################################################################
     ##Following code is just to print an example image and mask (IGNORE)
-    print_example_image = False
+    print_example_image = True
     if print_example_image:
         
         images_dir = os.path.join("data", "images", "train", "Images")
@@ -277,17 +296,14 @@ if __name__ == "__main__":
             pprint({'image': image.shape, 'mask': mask.shape})
             dataset.print_image_3D(mask)
 
-            image_resized, mask_resized = dataset.interpolate(image, type='bicubic'), dataset.interpolate(mask, type='nearest')
-            pprint({'image_resized_bicubic': image_resized.shape, 'mask_resized_nearest_nbor': mask_resized.shape})
-            dataset.print_image_3D(image_resized)
 
             # Augment data
-            images_augmented, masks_augmented = dataset.augment_data(image_resized, mask_resized)
+            images_augmented, masks_augmented = dataset.augment_data(image, mask)
             # Verify augmentation ?
-            verif_aug = False
+            verif_aug = True
             # Display each image in images and visually verify that the augmentation is correct
             if verif_aug:
                 for i in range(len(images_augmented)):
-                    #dataset.print_image_3D(images[i])
-                    dataset.print_image(masks_augmented[i])
+                    dataset.print_image_3D(images_augmented[i])
+                    #dataset.print_image(masks_augmented[i])
     
