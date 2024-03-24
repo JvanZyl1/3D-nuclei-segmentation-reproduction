@@ -36,6 +36,10 @@ class CellDataset(torch.utils.data.Dataset):
         image_max = image.max()
         image = (image - image_min) / (image_max - image_min)
 
+        mask_min = mask.min()
+        mask_max = mask.max()
+        mask = (mask - mask_min) / (mask_max - mask_min)
+
         """
         desired_height, desired_width = 139, 140
         image = DatasetUtils().apply_padding(image, desired_height, desired_width)
