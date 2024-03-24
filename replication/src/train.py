@@ -75,10 +75,7 @@ def train_ndn():
     run_training_loop(images_dir, ground_truth_dir, criterion, optimizer, num_epochs, model)
 
 
-def train_nsn():
-    images_dir = os.path.join("data", "images", "train", "Images")
-    ground_truth_dir = os.path.join("data", "GroundTruth", "train", "GroundTruth_NSN")
-
+def train_nsn(images_dir, ground_truth_dir):
     n_channels = 1
     model = NSN(n_channels)
 
@@ -104,4 +101,6 @@ def plot_train_val_loss(train_loss, val_loss):
 
 
 if __name__ == "__main__":
-    train_loss, val_loss = train_nsn()
+    images_dir = os.path.join("data_augmented", "Images", "train", "Images")
+    ground_truth_dir = os.path.join("data_augmented", "GroundTruth", "train", "GroundTruth_NSN")
+    train_loss, val_loss = train_nsn(images_dir=images_dir, ground_truth_dir=ground_truth_dir)
