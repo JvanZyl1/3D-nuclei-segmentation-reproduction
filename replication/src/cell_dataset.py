@@ -142,15 +142,9 @@ if __name__ == "__main__":
         pprint({'image': image.shape, 'mask': mask.shape})
         #dataset.print_image_3D(mask)
 
-        image_resized_bicubic, mask_resized = dataset.interpolate(image, type='bicubic'), dataset.interpolate(mask, type='nearest')
-        pprint({'image_resized_cubic': image_resized_bicubic.shape, 'mask_resized': mask_resized.shape})
+        image_resized, mask_resized = dataset.interpolate(image, type='bicubic'), dataset.interpolate(mask, type='nearest')
+        pprint({'image_resized_cubic': image_resized.shape, 'mask_resized': mask_resized.shape})
         #dataset.print_image_3D(image_resized_bicubic)
-
-        image_resized_cv2 = dataset.interpolate(image, type='cv2')
-        pprint({'image_resized_cv2': image_resized_cv2.shape, 'mask_resized': mask_resized.shape})
-
-        ##find mean squared error between bicubic and cv2 interpolation
-        print(skimage.metrics.mean_squared_error(image_resized_bicubic.numpy(), image_resized_cv2.numpy()))
 
         # Augment data
         images, masks = dataset.augment_data(image_resized, mask_resized)
@@ -164,7 +158,7 @@ if __name__ == "__main__":
 
         # Save the augmented images and masks as tiff files to the repsective directories however with the _augmented tag
         images_augmented_dir = os.path.join("data", "Images_Augmented", "train", "Images")
-        ground_truth_augmented_dir = os.path.join("data", "GroundTruth", "train", "GroundTruth_NDN")
+        ground_truth_augmented_dir = os.path.join("data", "GroundTruth_Augmented", "train", "GroundTruth_NDN")
         # Extract the original image name
         image_name = os.path.basename(dataset.image_paths[-1])
         # Save the original image and mask
