@@ -9,6 +9,7 @@ import scipy
 import matplotlib.pyplot as plt
 from mpl_interactions import ipyplot as iplt
 import skimage
+import cv2
 
 
 class CellDataset(torch.utils.data.Dataset):
@@ -62,23 +63,26 @@ class CellDataset(torch.utils.data.Dataset):
     def interpolate(self, image, type='cubic'):
         image = image.squeeze(0)
         scale_factor = 2.1875
-        if type == 'cubic':
-            #use cubic interpolation to resize the image along z-axis by scale factor of 2.1875 (not available with pytorch)
+        if type == 'bicubic':
+            #use bicubic interpolation to resize the image along z-axis by scale factor of 2.1875 (not available with pytorch)
             img_resized = scipy.ndimage.zoom(image, (scale_factor, 1, 1), order=3)
             img_resized = torch.from_numpy(img_resized).unsqueeze(0)#convert to tensor, re-add channel dimension
             return img_resized #shape: [1, 112, 139, 140]
-        
         if type == 'nearest':
             #use nearest interpolation for resizing mask to avoid having pixels with values between 0 and 1
             img_resized = scipy.ndimage.zoom(image, (scale_factor, 1, 1), order=0)
             img_resized = torch.from_numpy(img_resized).unsqueeze(0)#convert to tensor, re-add channel dimension    
             return img_resized #shape: [1, 112, 139, 140]
-        if type == 'skimage':
-            #this is what they use in the paper (although they use order=1 which is not bicubic)
-            D_des = int(scale_factor * image.shape[0])
-            img_resized = skimage.transform.resize(image.numpy(), (D_des+1, image.shape[1], image.shape[2]), order=3)
-            img_resized = torch.from_numpy(img_resized).unsqueeze(0)
-            return img_resized
+        if type == 'cv2':
+            # use cubic interpolation to resize the image along z-axis by scale factor of 2.1875 (not available with PyTorch)
+            resized_slices = []
+            for slice in image:
+                new_shape = (int(slice.shape[1] * scale_factor), int(slice.shape[0]))
+                resized_slice = cv2.resize(slice.numpy(), new_shape, interpolation=cv2.INTER_CUBIC)
+                resized_slices.append(resized_slice)
+            img_resized = np.stack(resized_slices, axis=0)
+            img_resized = torch.from_numpy(img_resized).unsqueeze(0)  # convert to tensor, re-add batch dimension
+            return img_resized  # shape: [1, Z, new_height, new_width]
             
         
     def print_image(self, image, slice_index=0):
@@ -138,9 +142,15 @@ if __name__ == "__main__":
         pprint({'image': image.shape, 'mask': mask.shape})
         #dataset.print_image_3D(mask)
 
-        image_resized, mask_resized = dataset.interpolate(image, type='skimage'), dataset.interpolate(mask, type='nearest')
-        pprint({'image_resized_cubic': image_resized.shape, 'mask_resized': mask_resized.shape})
-        #dataset.print_image_3D(image_resized)
+        image_resized_bicubic, mask_resized = dataset.interpolate(image, type='bicubic'), dataset.interpolate(mask, type='nearest')
+        pprint({'image_resized_cubic': image_resized_bicubic.shape, 'mask_resized': mask_resized.shape})
+        #dataset.print_image_3D(image_resized_bicubic)
+
+        image_resized_cv2 = dataset.interpolate(image, type='cv2')
+        pprint({'image_resized_cv2': image_resized_cv2.shape, 'mask_resized': mask_resized.shape})
+
+        ##find mean squared error between bicubic and cv2 interpolation
+        print(skimage.metrics.mean_squared_error(image_resized_bicubic.numpy(), image_resized_cv2.numpy()))
 
         # Augment data
         images, masks = dataset.augment_data(image_resized, mask_resized)
