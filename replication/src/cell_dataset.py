@@ -8,8 +8,6 @@ from dataset_utils import DatasetUtils
 import scipy
 import matplotlib.pyplot as plt
 from mpl_interactions import ipyplot as iplt
-import skimage
-import cv2
 
 
 class CellDataset(torch.utils.data.Dataset):
@@ -38,13 +36,15 @@ class CellDataset(torch.utils.data.Dataset):
         image_max = image.max()
         image = (image - image_min) / (image_max - image_min)
 
+        """
         desired_height, desired_width = 139, 140
         image = DatasetUtils().apply_padding(image, desired_height, desired_width)
         mask = DatasetUtils.apply_padding(mask, desired_height, desired_width)
-
+        """
         image = torch.from_numpy(image)
         mask = torch.from_numpy(mask)
 
+        image, mask = self.interpolate(image, type='bicubic'), self.interpolate(mask, type='nearest')
         #mirror padding
         image = torch.nn.functional.pad(image, (self.padding, self.padding, self.padding, self.padding), mode='reflect')    
         mask = torch.nn.functional.pad(mask, (self.padding, self.padding, self.padding, self.padding), mode='reflect')
@@ -73,16 +73,6 @@ class CellDataset(torch.utils.data.Dataset):
             img_resized = scipy.ndimage.zoom(image, (scale_factor, 1, 1), order=0)
             img_resized = torch.from_numpy(img_resized).unsqueeze(0)#convert to tensor, re-add channel dimension    
             return img_resized #shape: [1, 112, 139, 140]
-        if type == 'cv2':
-            # use cubic interpolation to resize the image along z-axis by scale factor of 2.1875 (not available with PyTorch)
-            resized_slices = []
-            for slice in image:
-                new_shape = (int(slice.shape[1] * scale_factor), int(slice.shape[0]))
-                resized_slice = cv2.resize(slice.numpy(), new_shape, interpolation=cv2.INTER_CUBIC)
-                resized_slices.append(resized_slice)
-            img_resized = np.stack(resized_slices, axis=0)
-            img_resized = torch.from_numpy(img_resized).unsqueeze(0)  # convert to tensor, re-add batch dimension
-            return img_resized  # shape: [1, Z, new_height, new_width]
             
         
     def print_image(self, image, slice_index=0):
@@ -122,6 +112,8 @@ class CellDataset(torch.utils.data.Dataset):
         masks = [mask, mask_flipped_x, mask_flipped_y, mask_flipped_xy]
         return images, masks
 
+
+
 def find_folder_paths():
     ##iterates through all subfolders in data directory and makes list of path names
     data_image_dir = os.path.join('data', 'Images')
@@ -129,62 +121,101 @@ def find_folder_paths():
     image_paths = []    
     gt_paths = []
     for root, dirs, files in os.walk(data_image_dir):
-        if not dirs:  # If the current directory has no subdirectories
+        if not dirs:  #if directory has no subdirectories
             image_paths.append(root) 
     for root, dirs, files in os.walk(data_gt_dir):
-        if not dirs:  # If the current directory has no subdirectories
+        if not dirs: 
             gt_paths.append(root)
-    return image_paths, gt_paths
+    paths = (image_paths, gt_paths)
+    augmented_image_paths = [path.replace('data', 'data_augmented', 1) for path in image_paths]
+    augmented_gt_paths = [path.replace('data', 'data_augmented', 1) for path in gt_paths]
+    augmented_paths = (augmented_image_paths, augmented_gt_paths)
+    return paths, augmented_paths
+
+
+
+def create_preprocessing_images():
+    ##Creates new folder 'data_augmented' which contains all the images after preprocessing
+    ##note: each image in original data folder becomes 4 images in augmented folder due to data augmentation
+    paths, augmented_paths = find_folder_paths()
+    # Pair 'test' folders
+    print("Image folder: ", paths[0][0])
+    print("Ground truth folder: ", paths[1][0])
+    process_folder_pair(paths[0][0], paths[1][0], augmented_paths[0][0], augmented_paths[1][0])
+
+    # Pair 'train' folders
+    for j in range(1, len(paths[1])):  # iterate over ground truth folders
+        print("Image folder: ", paths[0][1])
+        print("Ground truth folder: ", paths[1][j])
+        process_folder_pair(paths[0][1], paths[1][j], augmented_paths[0][1], augmented_paths[1][j])
+
+def process_folder_pair(images_dir, masks_dir, augmented_images_dir, augmented_masks_dir):
+    dataset = CellDataset(images_dir=images_dir, masks_dir=masks_dir)
+    for k in range(len(dataset)):
+        item = dataset[k]  # this will call the __getitem__ function
+        image, mask = item
+        images_augmented, masks_augmented = dataset.augment_data(image, mask)
+        
+        # Save the augmented images and masks
+        for l in range(len(images_augmented)):
+            # Get the original image name and append the augmentation type
+            original_image_name = os.path.splitext(os.path.basename(dataset.image_paths[k]))[0]
+            original_mask_name = os.path.splitext(os.path.basename(dataset.mask_paths[k]))[0]
+            augmentation_type = "_flipped_x" if l == 1 else "_flipped_y" if l == 2 else "_flipped_xy" if l == 3 else ""
+            image_augmented_name = original_image_name + augmentation_type + ".tif"
+            mask_augmented_name = original_mask_name + augmentation_type + ".tif"
+            
+            image_augmented_path = os.path.join(augmented_images_dir, image_augmented_name)
+            mask_augmented_path = os.path.join(augmented_masks_dir, mask_augmented_name)
+            
+            # Create the directories if they do not exist
+            os.makedirs(os.path.dirname(image_augmented_path), exist_ok=True)
+            os.makedirs(os.path.dirname(mask_augmented_path), exist_ok=True)
+            
+            # Save the images
+            tifffile.imwrite(image_augmented_path, images_augmented[l].numpy())
+            tifffile.imwrite(mask_augmented_path, masks_augmented[l].numpy())
 
 
 
 if __name__ == "__main__":
-    images_dir = os.path.join("data", "images", "train", "Images")
-    ground_truth_dir = os.path.join("data", "GroundTruth", "train", "GroundTruth_NDN")
-    dataset = CellDataset(images_dir=images_dir, masks_dir=ground_truth_dir)
-    print(len(dataset))
-    max_h, max_w = 0, 0
-    
-    # fixed ur dataset 
-    items = [item for item in dataset]  # load the entire thing into memory
-    for item in items[-1:]:             # let's print the last 5
+    """
+    run create_preprocessing_images() to create new folder 'data_augmented' with preprocessed images
+    leave commented out otherwise will run each time
+    """
+    #create_preprocessing_images()
 
-        image, mask = item 
-        pprint({'image': image.shape, 'mask': mask.shape})
-        #dataset.print_image_3D(mask)
-
-        image_resized, mask_resized = dataset.interpolate(image, type='bicubic'), dataset.interpolate(mask, type='nearest')
-        pprint({'image_resized_cubic': image_resized.shape, 'mask_resized': mask_resized.shape})
-        #dataset.print_image_3D(image_resized_bicubic)
-
-        # Augment data
-        images_augmented, masks_augmented = dataset.augment_data(image_resized, mask_resized)
-        # Verify augmentation ?
-        verif_aug = False
-        # Display each image in images and visually verify that the augmentation is correct
-        if verif_aug:
-            for i in range(len(images_augmented)):
-                #dataset.print_image_3D(images[i])
-                dataset.print_image(masks_augmented[i])
-
-        # Save the augmented images and masks as tiff files to the repsective directories however with the _augmented tag
-        images_augmented_dir = images_dir.replace("images", "Images_Augmented", 1)
-        ground_truth_augmented_dir = ground_truth_dir.replace("GroundTruth", "GroundTruth_Augmented", 1)
-        # Extract the original image name
-        image_name = os.path.basename(dataset.image_paths[-1])
-        print(image_name)
-        # Save the original image and mask
+    ############################################################################################################
+    ##Following code is just to print an example image and mask (IGNORE)
+    print_example_image = False
+    if print_example_image:
         
-        save_augmented = True
-        if save_augmented:
-            # clear the augmented directories
-            for f in os.listdir(images_augmented_dir):
-                os.remove(os.path.join(images_augmented_dir, f))
-            for f in os.listdir(ground_truth_augmented_dir):
-                os.remove(os.path.join(ground_truth_augmented_dir, f))
-            # New image names for the augmented images
-            image_names = [image_name, image_name.replace('.tif', '_flipped_x.tif'), image_name.replace('.tif', '_flipped_y.tif'), image_name.replace('.tif', '_flipped_xy.tif')]
-            mask_names = [image_name, image_name.replace('.tif', '_flipped_x.tif'), image_name.replace('.tif', '_flipped_y.tif'), image_name.replace('.tif', '_flipped_xy.tif')]
-            for i in range(len(images_augmented)):
-                tifffile.imwrite(os.path.join(images_augmented_dir, image_names[i]), images_augmented[i].squeeze(0).numpy().astype(np.float32))
-                tifffile.imwrite(os.path.join(ground_truth_augmented_dir, mask_names[i]), masks_augmented[i].squeeze(0).numpy().astype(np.float32))
+        images_dir = os.path.join("data", "images", "train", "Images")
+        ground_truth_dir = os.path.join("data", "GroundTruth", "train", "GroundTruth_NDN")
+        dataset = CellDataset(images_dir=images_dir, masks_dir=ground_truth_dir)
+        print(len(dataset))
+        mask_path = 'data/GroundTruth/train/GroundTruth_QCANet/Emb01_t001.tif'
+        image_path = 'data_augmented/images/train/Images/Emb01_t001.tif'
+        max_h, max_w = 0, 0
+        # fixed ur dataset 
+        items = [item for item in dataset]  # load the entire thing into memory
+        for item in items[-1:]:             # let's print the last 5
+
+            image, mask = item 
+            pprint({'image': image.shape, 'mask': mask.shape})
+            dataset.print_image_3D(mask)
+
+            image_resized, mask_resized = dataset.interpolate(image, type='bicubic'), dataset.interpolate(mask, type='nearest')
+            pprint({'image_resized_bicubic': image_resized.shape, 'mask_resized_nearest_nbor': mask_resized.shape})
+            dataset.print_image_3D(image_resized)
+
+            # Augment data
+            images_augmented, masks_augmented = dataset.augment_data(image_resized, mask_resized)
+            # Verify augmentation ?
+            verif_aug = False
+            # Display each image in images and visually verify that the augmentation is correct
+            if verif_aug:
+                for i in range(len(images_augmented)):
+                    #dataset.print_image_3D(images[i])
+                    dataset.print_image(masks_augmented[i])
+    
