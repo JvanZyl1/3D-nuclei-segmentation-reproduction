@@ -46,7 +46,13 @@ class PostProcessing():
         # Remove the extras 
         image_augmented = path_image  # use the path_image string instead of self.image
         mask_augmented = self.mask
-        path_original_image = path_image.replace("data_augmented", "data")
+        print(image_augmented)
+        if 'flipped' in image_augmented:
+            image_old = image_augmented.split("_")[:2]
+            image_old = "_".join(image_old) + ".tif"
+        else:
+            image_old = image_augmented
+        path_original_image = image_old.replace("data_augmented", "data")
 
         # Find dimensions of the original image
         image = tifffile.imread(path_original_image)
