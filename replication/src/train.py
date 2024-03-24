@@ -103,6 +103,6 @@ def plot_train_val_loss(train_loss, val_loss):
 
 
 if __name__ == "__main__":
-    images_dir = os.path.join("data_augmented_small", "Images", "train", "Images")
-    ground_truth_dir = os.path.join("data_augmented_small", "GroundTruth", "train", "GroundTruth_NSN")
+    images_dir = os.path.join("data_augmented", "Images", "train", "Images")
+    ground_truth_dir = os.path.join("data_augmented", "GroundTruth", "train", "GroundTruth_NSN")
     train_loss, val_loss = train_nsn(images_dir=images_dir, ground_truth_dir=ground_truth_dir)

@@ -60,7 +60,6 @@ def IoU(predictions, targets):
     iou = TP / (TP + FP + FN)
     return iou
 
-<<<<<<< Updated upstream
 
 def SEG(predictions, targets):
     # Get the unique labels for each instance in the targets, excluding background (label 0)
@@ -84,5 +83,3 @@ def SEG(predictions, targets):
     # Calculate SEG by averaging the sum of max IoUs for each label
     SEG_score = sum_max_iou / Ni
     return SEG_score
-=======
->>>>>>> Stashed changes
