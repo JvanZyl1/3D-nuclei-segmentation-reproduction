@@ -10,7 +10,9 @@ So far done:
 
 To do:
 
-- [ ] Preprocessing steps to the image (interpolation and mirror padding)
+- [ ] BiCubic Interpolation
+- [ ] Mirror padding
+- [ ] Data augmentation
 - [x] (Aral; done but not tested) All the metrics described in metrics.py 
 - [ ] Water-based marker shed for instance segmentation
 - [x] (Dani) Visualizing the training and test error per epoch
