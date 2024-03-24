@@ -59,3 +59,27 @@ def IoU(predictions, targets):
 
     iou = TP / (TP + FP + FN)
     return iou
+
+
+def SEG(predictions, targets):
+    # Get the unique labels for each instance in the targets, excluding background (label 0)
+    unique_labels = targets.unique()[1:]
+    Ni = len(unique_labels)
+    sum_max_iou = 0.0
+
+    # Loop through each unique label in the target
+    for label in unique_labels:
+        targets_mask = (targets == label)
+        
+        # Initialize to a value lower than any possible IoU
+        max_iou_for_label = -1  
+        for pred_label in predictions.unique():
+            iou = IoU(predictions == pred_label, targets_mask)
+            if iou > max_iou_for_label:
+                max_iou_for_label = iou
+        # Add the max IoU for this label to the sum
+        sum_max_iou += max_iou_for_label
+
+    # Calculate SEG by averaging the sum of max IoUs for each label
+    SEG_score = sum_max_iou / Ni
+    return SEG_score
