@@ -98,6 +98,26 @@ class CellDataset(torch.utils.data.Dataset):
         control = iplt.imshow(func, slice_index=(0, n_ind-1), cmap='gray')
         plt.show()
 
+    def augment_data(self, image, mask):
+        # For each image in the dataset, we want 4 final images:
+        # 1. Original image
+        # 2. Image flipped along x-axis
+        # 3. Image flipped along y-axis
+        # 4. Image flipped along x-axis and y-axis
+        # Image & Mask : [C, Z, Y, X]
+        image_flipped_x = torch.flip(image, [3])
+        image_flipped_y = torch.flip(image, [2])
+        image_flipped_xy = torch.flip(image, [2, 3])
+
+        mask_flipped_x = torch.flip(mask, [3])
+        mask_flipped_y = torch.flip(mask, [2])
+        mask_flipped_xy = torch.flip(mask, [2, 3])
+
+        images = [image, image_flipped_x, image_flipped_y, image_flipped_xy]
+
+        masks = [mask, mask_flipped_x, mask_flipped_y, mask_flipped_xy]
+        return images, masks
+
 
 
 
@@ -112,7 +132,7 @@ if __name__ == "__main__":
     
     # fixed ur dataset 
     items = [item for item in dataset]  # load the entire thing into memory
-    for item in items[-5:]:             # let's print the last 5
+    for item in items[-1:]:             # let's print the last 5
 
         image, mask = item 
         pprint({'image': image.shape, 'mask': mask.shape})
@@ -120,9 +140,27 @@ if __name__ == "__main__":
 
         image_resized, mask_resized = dataset.interpolate(image, type='skimage'), dataset.interpolate(mask, type='nearest')
         pprint({'image_resized_cubic': image_resized.shape, 'mask_resized': mask_resized.shape})
-        dataset.print_image_3D(image_resized)
+        #dataset.print_image_3D(image_resized)
+
+        # Augment data
+        images, masks = dataset.augment_data(image_resized, mask_resized)
+        # Verify augmentation ?
+        verif_aug = False
+        # Display each image in images and visually verify that the augmentation is correct
+        if verif_aug:
+            for i in range(len(images)):
+                #dataset.print_image_3D(images[i])
+                dataset.print_image(masks[i])
+
+        # Save the augmented images and masks as tiff files to the repsective directories however with the _augmented tag
+        images_augmented_dir = os.path.join("data", "Images_Augmented", "train", "Images")
+        ground_truth_augmented_dir = os.path.join("data", "GroundTruth", "train", "GroundTruth_NDN")
+        # Extract the original image name
+        image_name = os.path.basename(dataset.image_paths[-1])
+        # Save the original image and mask
         
-        # pprint is a python built-in for fixing dictionary printing
-        
-        # but it's not really necessary here as the dict is small...
-        # (dict joke)
+        save_augmented = False
+        if save_augmented:
+            for i in range(len(images)):
+                tifffile.imsave(os.path.join(images_dir, f"augmented_{i}.tif"), images[i])
+                tifffile.imsave(os.path.join(ground_truth_dir, f"augmented_{i}.tif"), masks[i])
