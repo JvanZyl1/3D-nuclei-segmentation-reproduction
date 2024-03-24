@@ -10,10 +10,11 @@ So far done:
 
 To do:
 
-- [ ] BiCubic Interpolation
-- [ ] Mirror padding
-- [ ] Data augmentation
-- [x] (Aral; done but not tested) All the metrics described in metrics.py 
+- [x] BiCubic Interpolation
+- [x] Mirror padding
+- [x] Data augmentation
+- [x] (Aral; done but not tested) All the metrics described in metrics.py
+- [x] Metrics fixed and unit tested
 - [ ] Water-based marker shed for instance segmentation
 - [x] (Dani) Visualizing the training and test error per epoch
 - [ ] Visualizing inference on cells
