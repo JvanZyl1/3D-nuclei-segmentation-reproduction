@@ -9,6 +9,61 @@ import scipy
 import matplotlib.pyplot as plt
 from mpl_interactions import ipyplot as iplt
 
+class PreProcessCellDataset(torch.utils.data.Dataset):
+
+    def __init__(self, images_dir, masks_dir):
+        self.images_dir = images_dir
+        self.masks_dir = masks_dir
+
+        self.image_paths = sorted([os.path.join(images_dir, f) for f in os.listdir(images_dir) if f.endswith('.tif')])
+        self.mask_paths = sorted([os.path.join(masks_dir, f) for f in os.listdir(masks_dir) if f.endswith('.tif')])
+
+        assert len(self.image_paths) == len(self.mask_paths), "The number of images and masks must be the same"
+    
+    def __len__(self):
+        return len(self.image_paths)
+    
+    def __getitem__(self, idx):
+        ##do the same as in CellDataset but without the interpolation and mirror padding
+        image = tifffile.imread(self.image_paths[idx])
+        mask = tifffile.imread(self.mask_paths[idx])
+
+        image = image.astype(np.float32)
+        mask = mask.astype(np.float32)
+
+        image = torch.from_numpy(image)
+        mask = torch.from_numpy(mask)
+
+        if len(image.shape) == 3:
+            image = image.unsqueeze(0)
+        if len(mask.shape) == 3:
+            mask = mask.unsqueeze(0)
+
+        return image, mask
+    
+    def __iter__(self):
+        for i in range(len(self)):
+            yield self[i]
+
+    def print_image(self, image, slice_index=0):
+        if len(image.shape) == 4:
+            image = image.squeeze(0)
+        image_slice = image[slice_index]
+        plt.imshow(image_slice, cmap='gray')
+        plt.show()
+
+    def print_image_3D(self, image, slice_index=0):
+        if len(image.shape) == 4:
+            image = image.squeeze(0)
+        def func(slice_index):
+            #returns slics of image
+            return image[int(slice_index)]
+        n_ind = image.shape[0]
+        control = iplt.imshow(func, slice_index=(0, n_ind-1), cmap='gray')
+        plt.show()
+
+
+
 
 class CellDataset(torch.utils.data.Dataset):
 
@@ -188,6 +243,19 @@ if __name__ == "__main__":
     leave commented out otherwise will run each time
     """
     #create_preprocessing_images()
+    images_dir = os.path.join("data_augmented", "images", "train", "Images")
+    ground_truth_dir = os.path.join("data_augmented", "GroundTruth", "train", "GroundTruth_NDN")
+    dataset = PreProcessCellDataset(images_dir=images_dir, masks_dir=ground_truth_dir)
+    print(len(dataset))
+
+    items = [item for item in dataset]
+    for item in items[-1:]:
+        image, mask = item
+        pprint({'image': image.shape, 'mask': mask.shape})
+        dataset.print_image_3D(mask)
+        dataset.print_image_3D(image)
+
+    
 
     ############################################################################################################
     ##Following code is just to print an example image and mask (IGNORE)
