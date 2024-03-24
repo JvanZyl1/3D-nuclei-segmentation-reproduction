@@ -147,24 +147,33 @@ if __name__ == "__main__":
         #dataset.print_image_3D(image_resized_bicubic)
 
         # Augment data
-        images, masks = dataset.augment_data(image_resized, mask_resized)
+        images_augmented, masks_augmented = dataset.augment_data(image_resized, mask_resized)
         # Verify augmentation ?
         verif_aug = False
         # Display each image in images and visually verify that the augmentation is correct
         if verif_aug:
-            for i in range(len(images)):
+            for i in range(len(images_augmented)):
                 #dataset.print_image_3D(images[i])
-                dataset.print_image(masks[i])
+                dataset.print_image(masks_augmented[i])
 
         # Save the augmented images and masks as tiff files to the repsective directories however with the _augmented tag
-        images_augmented_dir = os.path.join("data", "Images_Augmented", "train", "Images")
-        ground_truth_augmented_dir = os.path.join("data", "GroundTruth_Augmented", "train", "GroundTruth_NDN")
+        images_augmented_dir = images_dir.replace("images", "Images_Augmented", 1)
+        ground_truth_augmented_dir = ground_truth_dir.replace("GroundTruth", "GroundTruth_Augmented", 1)
         # Extract the original image name
         image_name = os.path.basename(dataset.image_paths[-1])
+        print(image_name)
         # Save the original image and mask
         
-        save_augmented = False
+        save_augmented = True
         if save_augmented:
-            for i in range(len(images)):
-                tifffile.imsave(os.path.join(images_dir, f"augmented_{i}.tif"), images[i])
-                tifffile.imsave(os.path.join(ground_truth_dir, f"augmented_{i}.tif"), masks[i])
+            # clear the augmented directories
+            for f in os.listdir(images_augmented_dir):
+                os.remove(os.path.join(images_augmented_dir, f))
+            for f in os.listdir(ground_truth_augmented_dir):
+                os.remove(os.path.join(ground_truth_augmented_dir, f))
+            # New image names for the augmented images
+            image_names = [image_name, image_name.replace('.tif', '_flipped_x.tif'), image_name.replace('.tif', '_flipped_y.tif'), image_name.replace('.tif', '_flipped_xy.tif')]
+            mask_names = [image_name, image_name.replace('.tif', '_flipped_x.tif'), image_name.replace('.tif', '_flipped_y.tif'), image_name.replace('.tif', '_flipped_xy.tif')]
+            for i in range(len(images_augmented)):
+                tifffile.imwrite(os.path.join(images_augmented_dir, image_names[i]), images_augmented[i].squeeze(0).numpy().astype(np.float32))
+                tifffile.imwrite(os.path.join(ground_truth_augmented_dir, mask_names[i]), masks_augmented[i].squeeze(0).numpy().astype(np.float32))
