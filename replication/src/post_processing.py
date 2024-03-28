@@ -15,7 +15,6 @@ import torch
 import scipy
 import tifffile
 import matplotlib.pyplot as plt
-from mpl_interactions import ipyplot as iplt
 
 
 def remove_mirror_padding(image, padding=64):
