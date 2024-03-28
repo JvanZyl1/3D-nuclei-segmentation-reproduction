@@ -10,14 +10,14 @@ from cell_dataset import CellDataset, PreProcessCellDataset
 
 
 def run_training_loop(images_dir, ground_truth_dir, criterion, optimizer, num_epochs, model):
-    dataset = PreProcessCellDataset(images_dir=images_dir, masks_dir=ground_truth_dir)
+    dataset = CellDataset(images_dir=images_dir, masks_dir=ground_truth_dir)
 
     train_size = int(0.8 * len(dataset))
     eval_size = len(dataset) - train_size
     train_dataset, eval_dataset = random_split(dataset, [train_size, eval_size])
 
-    train_dataloader = DataLoader(train_dataset, batch_size=1, shuffle=True)
-    eval_dataloader = DataLoader(eval_dataset, batch_size=1, shuffle=False)
+    train_dataloader = DataLoader(train_dataset, batch_size=4, shuffle=True)
+    eval_dataloader = DataLoader(eval_dataset, batch_size=4, shuffle=False)
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model.to(device)
