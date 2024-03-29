@@ -7,6 +7,7 @@ from dataset_utils import DatasetUtils
 
 import scipy
 import matplotlib.pyplot as plt
+from mpl_interactions import ipyplot as iplt
 
 class PreProcessCellDataset(torch.utils.data.Dataset):
 

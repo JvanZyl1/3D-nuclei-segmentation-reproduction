@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from unet_3d import NSN, NDN
 from metrics import DiceLoss
 from cell_dataset import CellDataset, PreProcessCellDataset
+from mpl_interactions import ipyplot as iplt
 
 
 def run_training_loop(images_dir, ground_truth_dir, criterion, optimizer, num_epochs, model):
@@ -34,9 +35,6 @@ def run_training_loop(images_dir, ground_truth_dir, criterion, optimizer, num_ep
             inputs, labels = inputs.to(device), labels.to(device)
             optimizer.zero_grad()
             outputs = model(inputs)
-            print(outputs)
-            print(labels)
-            dataset.print_image_3D(outputs[0])
             loss = criterion(outputs, labels)
             loss.backward()
             print(loss)
@@ -84,7 +82,7 @@ def train_nsn(images_dir, ground_truth_dir):
     n_channels = 1
     model = NSN(n_channels)
 
-    learning_rate = 0.001
+    learning_rate = 0.01
     criterion = DiceLoss()
     optimizer = optim.SGD(model.parameters(), lr=learning_rate)
     num_epochs = 10
