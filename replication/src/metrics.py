@@ -111,3 +111,9 @@ class Metrics:
             'SEG': seg_score,
             'MUCov': mucov_score
         }
+
+if __name__ == "__main__":
+    first_test = torch.zeros((1, 51, 121, 121))
+    second_test = torch.ones((1, 51, 121, 121))
+    dice_loss = DiceLoss()
+    print(dice_loss(first_test, second_test))

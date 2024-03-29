@@ -16,8 +16,8 @@ def run_training_loop(images_dir, ground_truth_dir, criterion, optimizer, num_ep
     eval_size = len(dataset) - train_size
     train_dataset, eval_dataset = random_split(dataset, [train_size, eval_size])
 
-    train_dataloader = DataLoader(train_dataset, batch_size=4, shuffle=True)
-    eval_dataloader = DataLoader(eval_dataset, batch_size=4, shuffle=False)
+    train_dataloader = DataLoader(train_dataset, batch_size=1, shuffle=True)
+    eval_dataloader = DataLoader(eval_dataset, batch_size=1, shuffle=False)
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model.to(device)
@@ -34,6 +34,9 @@ def run_training_loop(images_dir, ground_truth_dir, criterion, optimizer, num_ep
             inputs, labels = inputs.to(device), labels.to(device)
             optimizer.zero_grad()
             outputs = model(inputs)
+            print(outputs)
+            print(labels)
+            dataset.print_image_3D(outputs[0])
             loss = criterion(outputs, labels)
             loss.backward()
             print(loss)
