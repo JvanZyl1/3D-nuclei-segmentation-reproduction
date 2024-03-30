@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 from unet_3d import NSN, NDN
 from metrics import DiceLoss
-from cell_dataset import CellDataset, PreProcessCellDataset
+from cell_dataset import CellDataset
 
 
 def run_training_loop(images_dir, ground_truth_dir, criterion, optimizer, num_epochs, model):
@@ -57,7 +57,7 @@ def run_training_loop(images_dir, ground_truth_dir, criterion, optimizer, num_ep
 
     print('Finished Training')
 
-    return train_loss_per_epoch, val_loss_per_epoch
+    return model, train_loss_per_epoch, val_loss_per_epoch
 
 
 def adjust_learning_rate(optimizer, epoch, initial_lr=0.1, decay_factor=0.1, decay_epoch=10):
@@ -111,4 +111,13 @@ def plot_train_val_loss(train_loss, val_loss):
 if __name__ == "__main__":
     images_dir = os.path.join("data", "Images", "train", "Images")
     ground_truth_dir = os.path.join("data", "GroundTruth", "train", "GroundTruth_NSN")
-    train_loss, val_loss = train_nsn(images_dir=images_dir, ground_truth_dir=ground_truth_dir)
+    model, train_loss, val_loss = train_nsn(images_dir=images_dir, ground_truth_dir=ground_truth_dir)
+    torch.save(model.state_dict(), "nsn.pth")
+
+    with open("train_loss.txt", 'w') as f:
+        for value in train_loss:
+            f.write(f"{value}\n")
+
+    with open("val_loss", 'w') as f:
+        for value in val_loss:
+            f.write(f"{value}\n")
