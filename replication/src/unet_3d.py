@@ -3,21 +3,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-class CBR(nn.Module):
-
-    def __init__(self, in_channels, kernel_size, stride, padding, filters):
-        super().__init__()
-        self.cbr_block = nn.Sequential(
-            nn.Conv3d(in_channels, filters, kernel_size, stride, padding),
-            nn.BatchNorm3d(filters),
-            nn.ReLU(inplace=True)
-        )
-
-    def forward(self, x):
-        x = self.cbr_block(x)
-        return x
-
-
 class DoubleConvolution(nn.Module):
 
     def __init__(self, in_channels, out_channels_first, out_channels, kernel_size, stride, padding):
@@ -25,10 +10,10 @@ class DoubleConvolution(nn.Module):
         self.double_conv = nn.Sequential(
             nn.Conv3d(in_channels, out_channels_first, kernel_size, stride, padding),
             nn.BatchNorm3d(out_channels_first),
-            nn.ReLU(inplace=True),
+            nn.LeakyReLU(inplace=True),
             nn.Conv3d(out_channels_first, out_channels, kernel_size, stride, padding),
             nn.BatchNorm3d(out_channels),
-            nn.ReLU(inplace=True)
+            nn.LeakyReLU(inplace=True)
         )
 
     def forward(self, x):
@@ -108,7 +93,7 @@ class NSN(nn.Module):  # this time with double convolutions to make the code cle
         x9 = self.double_conv_5(x8)
         x10 = self.conv(x9)
 
-        return torch.sigmoid(x10)
+        return x10
 
 
 class NDN(nn.Module):

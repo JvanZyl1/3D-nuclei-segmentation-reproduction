@@ -107,23 +107,20 @@ class CellDataset(torch.utils.data.Dataset):
         image_min = image.min()
         image_max = image.max()
         image = (image - image_min) / (image_max - image_min)
-
-        mask_min = mask.min()
-        mask_max = mask.max()
-        mask = (mask - mask_min) / (mask_max - mask_min)
+        mask = mask / np.max(mask)
 
         
-        desired_height, desired_width = 140, 140
+        desired_height, desired_width = 139, 140
         image = DatasetUtils().apply_padding(image, desired_height, desired_width)
-        mask = DatasetUtils.apply_padding(mask, desired_height, desired_width)
+        mask = DatasetUtils().apply_padding(mask, desired_height, desired_width)
         
         image = torch.from_numpy(image)
         mask = torch.from_numpy(mask)
 
-        image, mask = self.interpolate(image, type='bicubic'), self.interpolate(mask, type='nearest')
+        # image, mask = self.interpolate(image, type='bicubic'), self.interpolate(mask, type='nearest')
         #mirror padding
-        image = torch.nn.functional.pad(image, (self.padding, self.padding, self.padding, self.padding), mode='reflect')    
-        mask = torch.nn.functional.pad(mask, (self.padding, self.padding, self.padding, self.padding), mode='reflect')
+        # image = torch.nn.functional.pad(image, (self.padding, self.padding, self.padding, self.padding), mode='reflect')
+        # mask = torch.nn.functional.pad(mask, (self.padding, self.padding, self.padding, self.padding), mode='reflect')
         if len(image.shape) == 3:
             image = image.unsqueeze(0)
         if len(mask.shape) == 3:

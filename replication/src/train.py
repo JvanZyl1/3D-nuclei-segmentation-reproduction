@@ -10,7 +10,7 @@ from cell_dataset import CellDataset, PreProcessCellDataset
 
 
 def run_training_loop(images_dir, ground_truth_dir, criterion, optimizer, num_epochs, model):
-    dataset = PreProcessCellDataset(images_dir=images_dir, masks_dir=ground_truth_dir)
+    dataset = CellDataset(images_dir=images_dir, masks_dir=ground_truth_dir)
 
     train_size = int(0.8 * len(dataset))
     eval_size = len(dataset) - train_size
@@ -22,7 +22,6 @@ def run_training_loop(images_dir, ground_truth_dir, criterion, optimizer, num_ep
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model.to(device)
 
-
     train_loss_per_epoch, val_loss_per_epoch = [], []
 
     for epoch in range(1, num_epochs + 1):
@@ -31,6 +30,7 @@ def run_training_loop(images_dir, ground_truth_dir, criterion, optimizer, num_ep
         model.train()
         running_loss = 0.0
         for inputs, labels in train_dataloader:
+            adjust_learning_rate(optimizer, epoch)
             inputs, labels = inputs.to(device), labels.to(device)
             optimizer.zero_grad()
             outputs = model(inputs)
@@ -60,6 +60,11 @@ def run_training_loop(images_dir, ground_truth_dir, criterion, optimizer, num_ep
     return train_loss_per_epoch, val_loss_per_epoch
 
 
+def adjust_learning_rate(optimizer, epoch, initial_lr=0.1, decay_factor=0.1, decay_epoch=20):
+    lr = initial_lr * (decay_factor ** (epoch // decay_epoch))
+    for param_group in optimizer.param_groups:
+        param_group['lr'] = lr
+
 
 def train_ndn():
     images_dir = os.path.join("data", "images", "train", "Images")
@@ -81,12 +86,13 @@ def train_nsn(images_dir, ground_truth_dir):
     n_channels = 1
     model = NSN(n_channels)
 
-    learning_rate = 0.001
+    learning_rate = 0.1
     criterion = DiceLoss()
     optimizer = optim.SGD(model.parameters(), lr=learning_rate)
-    num_epochs = 10
+    num_epochs = 150
 
     return run_training_loop(images_dir, ground_truth_dir, criterion, optimizer, num_epochs, model)
+
 
 def plot_train_val_loss(train_loss, val_loss):
     epochs = range(1, len(train_loss) + 1)
@@ -103,6 +109,6 @@ def plot_train_val_loss(train_loss, val_loss):
 
 
 if __name__ == "__main__":
-    images_dir = os.path.join("data_augmented", "Images", "train", "Images")
-    ground_truth_dir = os.path.join("data_augmented", "GroundTruth", "train", "GroundTruth_NSN")
+    images_dir = os.path.join("data", "Images", "train", "Images")
+    ground_truth_dir = os.path.join("data", "GroundTruth", "train", "GroundTruth_NSN")
     train_loss, val_loss = train_nsn(images_dir=images_dir, ground_truth_dir=ground_truth_dir)
