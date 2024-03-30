@@ -60,7 +60,7 @@ def run_training_loop(images_dir, ground_truth_dir, criterion, optimizer, num_ep
     return train_loss_per_epoch, val_loss_per_epoch
 
 
-def adjust_learning_rate(optimizer, epoch, initial_lr=0.1, decay_factor=0.1, decay_epoch=20):
+def adjust_learning_rate(optimizer, epoch, initial_lr=0.1, decay_factor=0.1, decay_epoch=10):
     lr = initial_lr * (decay_factor ** (epoch // decay_epoch))
     for param_group in optimizer.param_groups:
         param_group['lr'] = lr
@@ -86,7 +86,7 @@ def train_nsn(images_dir, ground_truth_dir):
     n_channels = 1
     model = NSN(n_channels)
 
-    learning_rate = 0.1
+    learning_rate = 0.05
     criterion = DiceLoss()
     optimizer = optim.SGD(model.parameters(), lr=learning_rate)
     num_epochs = 150
