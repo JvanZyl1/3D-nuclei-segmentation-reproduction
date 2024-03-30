@@ -133,16 +133,12 @@ class DiceLoss(nn.Module):
 
     def forward(self, predictions, targets):
         smooth = 1e-6
-        # Ensure the predictions are probabilities, which can be achieved by applying a sigmoid or softmax depending on your problem.
-        predictions = torch.sigmoid(predictions)  # Use torch.softmax(predictions, dim=1) for multi-class.
+        predictions = torch.sigmoid(predictions)
 
-        # Calculate Dice score
-        intersection = torch.sum(predictions * targets, dim=(2, 3))  # Sum over height and width dimensions
-        union = torch.sum(predictions, dim=(2, 3)) + torch.sum(targets, dim=(2, 3))
+        pred_flat = predictions.contiguous().view(-1)
+        target_flat = targets.contiguous().view(-1)
 
-        dice_score = (2. * intersection + smooth) / (union + smooth)
-        dice_loss = 1 - dice_score
+        intersection = (pred_flat * target_flat).sum()
+        dice_coeff = (2. * intersection + smooth) / (pred_flat.sum() + target_flat.sum() + smooth)
 
-        # For binary classification, you might return the mean loss over the batch.
-        # For multi-class, consider averaging or summing across the channel dimension first.
-        return dice_loss.mean()
+        return 1 - dice_coeff

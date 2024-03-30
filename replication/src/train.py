@@ -1,4 +1,5 @@
 import os, torch, torch.optim as optim
+import torch.nn as nn
 
 from torch.utils.data import DataLoader
 from torch.utils.data.dataset import random_split
@@ -33,6 +34,8 @@ def run_training_loop(images_dir, ground_truth_dir, criterion, optimizer, num_ep
             inputs, labels = inputs.to(device), labels.to(device)
             optimizer.zero_grad()
             outputs = model(inputs)
+            if epoch == 50:
+                plot_everything(inputs, labels, outputs)
             loss = criterion(outputs, labels)
             loss.backward()
             print(loss)
@@ -42,22 +45,20 @@ def run_training_loop(images_dir, ground_truth_dir, criterion, optimizer, num_ep
         train_loss_per_epoch.append(epoch_loss)
         print(f'Train - Epoch {epoch + 1}/{num_epochs}, Loss: {epoch_loss:.4f}')
 
-        model.eval()
-        eval_loss = 0.0
-        with torch.no_grad():
-            for inputs, labels in eval_dataloader:
-                inputs, labels = inputs.to(device), labels.to(device)
-                outputs = model(inputs)
-                loss = criterion(outputs, labels)
-                eval_loss += loss.item()
-        eval_loss /= len(eval_dataloader)
-        val_loss_per_epoch.append(eval_loss)
-        print(f'Eval - Epoch {epoch + 1}/{num_epochs}, Loss: {eval_loss:.4f}')
-
     print('Finished Training')
 
     return train_loss_per_epoch, val_loss_per_epoch
 
+def plot_everything(input_images, labels, predictions):
+    input_image = input_images[0][0][24].detach().numpy()
+    label = labels[0][0][24].detach().numpy()
+    prediction = predictions[0][0][24].detach().numpy()
+
+    fig, axs = plt.subplots(3)
+    axs[0].imshow(input_image * 255)
+    axs[1].imshow(label * 255)
+    axs[2].imshow(prediction * 255)
+    plt.show()
 
 def train_ndn():
     images_dir = os.path.join("data", "images", "train", "Images")

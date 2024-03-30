@@ -21,6 +21,6 @@ class DatasetUtils:
                          (height_padding, height_padding + height_padding_extra),
                          (width_padding, width_padding + width_padding_extra)]
 
-        padded_image = np.pad(image, padding_sizes, mode='constant', constant_values=0)
+        padded_image = np.pad(image, padding_sizes, mode='reflect')
 
         return padded_image
