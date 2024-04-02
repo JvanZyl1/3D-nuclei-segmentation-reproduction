@@ -135,4 +135,4 @@ class NDN(nn.Module):
         x17 = self.double_conv_9(x16)
         x18 = self.conv(x17)
 
-        return torch.sigmoid(x18)
+        return x18

@@ -22,7 +22,8 @@ class DiceLoss(nn.Module):
         intersection = (pred_flat * target_flat).sum()
         dice_coeff = (2. * intersection + smooth) / (pred_flat.sum() + target_flat.sum() + smooth)
 
-        return 1 - dice_coeff
+        dice_loss = 1 - dice_coeff
+        return dice_loss.mean()
     
 def IoU(predictions, targets):
     intersection = torch.sum(predictions * targets)
