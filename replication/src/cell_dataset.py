@@ -117,7 +117,7 @@ class CellDataset(torch.utils.data.Dataset):
         image = torch.from_numpy(image)
         mask = torch.from_numpy(mask)
 
-        # image, mask = self.interpolate(image, type='bicubic'), self.interpolate(mask, type='nearest')
+        image, mask = self.interpolate(image, type='bicubic'), self.interpolate(mask, type='nearest')
         #mirror padding
         # image = torch.nn.functional.pad(image, (self.padding, self.padding, self.padding, self.padding), mode='reflect')
         # mask = torch.nn.functional.pad(mask, (self.padding, self.padding, self.padding, self.padding), mode='reflect')
