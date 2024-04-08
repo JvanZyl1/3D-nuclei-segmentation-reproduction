@@ -5,7 +5,8 @@ import cv2 as cv
 import numpy as np
 import matplotlib.pyplot as plt
 import mpl_interactions.ipyplot as iplt
-from mayavi import mlab
+from mpl_toolkits.mplot3d import Axes3D
+import ipyvolume as ipv
 import tifffile
 #load trained models (NSN saved using pickle, unlike NDN)
 n_channels = 1
@@ -43,7 +44,7 @@ def run_watershed(nsn_output, ndn_output, slice):
     # Marker labelling
     ret, markers = cv.connectedComponents(sure_fg)
     
-    # Add one to all labels so that sure background is not 0, but 1
+    # sure background = 1
     markers = markers+1
 
     thresh = cv.cvtColor(thresh, cv.COLOR_GRAY2BGR)
@@ -51,23 +52,73 @@ def run_watershed(nsn_output, ndn_output, slice):
     nsn_output_norm = cv.cvtColor(nsn_output_norm, cv.COLOR_GRAY2BGR)
     ndn_output_norm = cv.cvtColor(ndn_output_norm, cv.COLOR_GRAY2BGR)
     
-    # Now, mark the region of unknown with zero
     markers[unknown==255] = 0
     markers = cv.watershed(nsn_output_norm,markers)
-    nsn_output_norm[markers == -1] = [255,0,0]
-    ndn_output_norm[markers == -1] = [255,0,0]
+    fig, ax = plt.subplots(figsize=(6, 6))
+    ax.imshow(markers, cmap="tab20b")
+    ax.axis('off')
+    plt.show()
+
+    """
+    #nsn_output_norm[markers == -1] = [255,0,0]
+    #ndn_output_norm[markers == -1] = [255,0,0]
+    
+    for i in range(3, np.max(markers) + 1):
+        nsn_output_norm[markers == i] = [255, 0, 0]
+        ndn_output_norm[markers == i] = [255, 0, 0]"""
     return nsn_output_norm, ndn_output_norm
 
 #function to plot 3d color image
-def plot_image_3D(image, slice_index=0):
-    if len(image.shape) == 4:
-        image = image.squeeze(0)
-    def func(slice_index):
-        #returns slics of image
-        return image[int(slice_index)]
-    n_ind = image.shape[0]
-    control = iplt.imshow(func, slice_index=(0, n_ind-1))
+
+def plot_3D_image(data, sampling_rate=2, threshold=0.8):
+    """
+    Plots a 3D representation of an NSN watershed image with corresponding colors.
+    
+    Parameters:
+    - data: A 4D numpy array with shape [Z, X, Y, RGB], representing the 3D image and its color channels.
+    - sampling_rate: An integer to downsample the data for visualization. Higher values result in fewer points plotted.
+    - threshold: A float value used as a threshold to determine which voxels to plot based on the first color channel.
+    """
+    
+    # Ensure the data has the correct dimensions
+    if data.ndim != 4 or data.shape[3] != 3:
+        raise ValueError("Data must be a 4D numpy array with the last dimension being 3 for RGB channels.")
+    
+    # Extract the coordinates where the voxel should be plotted based on the threshold and sampling rate
+    z, x, y = np.where(data[:, :, :, 0] > threshold)
+    z, x, y = z[::sampling_rate], x[::sampling_rate], y[::sampling_rate]
+    
+    # Extract corresponding colors for each voxel
+    colors = data[z, x, y]
+    
+    # Create a 3D plot
+    fig = plt.figure(figsize=(10, 7))
+    ax = fig.add_subplot(111, projection='3d')
+    
+    # Scatter plot, each point with its corresponding color
+    ax.scatter(x, y, z, c=colors, marker='o')
+    
+    # Set labels
+    ax.set_xlabel('X Label')
+    ax.set_ylabel('Y Label')
+    ax.set_zlabel('Z Label')
+    
+    # Show the plot
     plt.show()
+
+
+def normalize_colors(data):
+    """
+    Normalize the RGB values in the image data to be within the range 0-1.
+
+    Parameters:
+    - data: A 4D numpy array with shape [Z, X, Y, RGB], representing the 3D image and its color channels.
+
+    Returns:
+    - Normalized data with RGB values in the range 0-1.
+    """
+    return data / np.max(data)
+
     
 
 if __name__ == "__main__":
@@ -82,10 +133,14 @@ if __name__ == "__main__":
     #convert to numpy array
     ndn_output = ndn_output.detach().numpy()
     nsn_output = nsn_output.detach().numpy()
+
+    nsn_output = nsn_output[:, 32:-32, 32:-32]
+    ndn_output = ndn_output[:, 32:-32, 32:-32]
     
     # Initialize nsn_watershed and ndn_watershed as 3D arrays
     nsn_watershed = np.zeros((*nsn_output.shape, 3), dtype=np.uint8)
     ndn_watershed = np.zeros((*ndn_output.shape, 3), dtype=np.uint8)
+
 
     print(nsn_watershed.shape)
     print(ndn_watershed.shape)
@@ -98,7 +153,14 @@ if __name__ == "__main__":
     if not os.path.exists("watershed_images"):
         os.makedirs("watershed_images")
     tifffile.imsave("watershed_images/nsn_watershed.tif", nsn_watershed)
+
+    # Z X Y RGB
     tifffile.imsave("watershed_images/ndn_watershed.tif", ndn_watershed)
+
+    #get the 3D plot of the watershed images
+    plot_3D_image(normalize_colors(nsn_watershed))
+    ##load the saved images
+    
 
 
     
