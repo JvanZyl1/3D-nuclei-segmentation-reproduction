@@ -4,6 +4,9 @@ from unet_3d import NSN, NDN
 import cv2 as cv
 import numpy as np
 import matplotlib.pyplot as plt
+import mpl_interactions.ipyplot as iplt
+from mayavi import mlab
+import tifffile
 #load trained models (NSN saved using pickle, unlike NDN)
 n_channels = 1
 ndn_model = NDN(n_channels=n_channels) 
@@ -54,6 +57,17 @@ def run_watershed(nsn_output, ndn_output, slice):
     nsn_output_norm[markers == -1] = [255,0,0]
     ndn_output_norm[markers == -1] = [255,0,0]
     return nsn_output_norm, ndn_output_norm
+
+#function to plot 3d color image
+def plot_image_3D(image, slice_index=0):
+    if len(image.shape) == 4:
+        image = image.squeeze(0)
+    def func(slice_index):
+        #returns slics of image
+        return image[int(slice_index)]
+    n_ind = image.shape[0]
+    control = iplt.imshow(func, slice_index=(0, n_ind-1))
+    plt.show()
     
 
 if __name__ == "__main__":
@@ -68,18 +82,34 @@ if __name__ == "__main__":
     #convert to numpy array
     ndn_output = ndn_output.detach().numpy()
     nsn_output = nsn_output.detach().numpy()
-    print(ndn_output.shape)
-    print(nsn_output.shape)
+    
+    # Initialize nsn_watershed and ndn_watershed as 3D arrays
+    nsn_watershed = np.zeros((*nsn_output.shape, 3), dtype=np.uint8)
+    ndn_watershed = np.zeros((*ndn_output.shape, 3), dtype=np.uint8)
+
+    print(nsn_watershed.shape)
+    print(ndn_watershed.shape)
+
+    for slice in range(nsn_output.shape[0]):
+        nsn_watershed[slice], ndn_watershed[slice] = run_watershed(nsn_output, ndn_output, slice)
+
+    ##save nsn_watershed and ndn_watershed as tiff files in folder called "watershed_images"
+    #make directory if it does not exist
+    if not os.path.exists("watershed_images"):
+        os.makedirs("watershed_images")
+    tifffile.imsave("watershed_images/nsn_watershed.tif", nsn_watershed)
+    tifffile.imsave("watershed_images/ndn_watershed.tif", ndn_watershed)
+
 
     
-    
+    """
     slice = 25
     #print(run_watershed(nsn_output, ndn_output))
     img_watershed, imgwatershedndn = run_watershed(nsn_output, ndn_output, slice)
     padding = 32
     img_watershed = img_watershed[padding:-padding, padding:-padding]
     imgwatershedndn = imgwatershedndn[padding:-padding, padding:-padding]
-
+    
     
 
     #plot img_watershed and nsn_output and ndn_outpu in subplot
@@ -90,7 +120,7 @@ if __name__ == "__main__":
     axs[1].set_title("NDN output")
     axs[2].imshow(img_watershed, cmap='gray')
     axs[2].set_title("Watershed output")
-    plt.show()
+    plt.show()"""
     
 
     """
