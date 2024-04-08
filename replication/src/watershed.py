@@ -53,19 +53,13 @@ def run_watershed(nsn_output, ndn_output, slice):
     ndn_output_norm = cv.cvtColor(ndn_output_norm, cv.COLOR_GRAY2BGR)
     
     markers[unknown==255] = 0
-    markers = cv.watershed(nsn_output_norm,markers)
-    fig, ax = plt.subplots(figsize=(6, 6))
-    ax.imshow(markers, cmap="tab20b")
-    ax.axis('off')
-    plt.show()
-
-    """
-    #nsn_output_norm[markers == -1] = [255,0,0]
-    #ndn_output_norm[markers == -1] = [255,0,0]
     
-    for i in range(3, np.max(markers) + 1):
-        nsn_output_norm[markers == i] = [255, 0, 0]
-        ndn_output_norm[markers == i] = [255, 0, 0]"""
+    markers = cv.watershed(nsn_output_norm,markers)
+
+    nsn_output_norm[markers == -1] = [255,0,0]
+    ndn_output_norm[markers == -1] = [255,0,0]
+    
+    
     return nsn_output_norm, ndn_output_norm
 
 #function to plot 3d color image
@@ -79,6 +73,7 @@ def plot_3D_image(data, sampling_rate=2, threshold=0.8):
     - sampling_rate: An integer to downsample the data for visualization. Higher values result in fewer points plotted.
     - threshold: A float value used as a threshold to determine which voxels to plot based on the first color channel.
     """
+    data = data[:, 5:-5, 5:-5, :]
     
     # Ensure the data has the correct dimensions
     if data.ndim != 4 or data.shape[3] != 3:
@@ -142,8 +137,6 @@ if __name__ == "__main__":
     ndn_watershed = np.zeros((*ndn_output.shape, 3), dtype=np.uint8)
 
 
-    print(nsn_watershed.shape)
-    print(ndn_watershed.shape)
 
     for slice in range(nsn_output.shape[0]):
         nsn_watershed[slice], ndn_watershed[slice] = run_watershed(nsn_output, ndn_output, slice)
@@ -158,7 +151,7 @@ if __name__ == "__main__":
     tifffile.imsave("watershed_images/ndn_watershed.tif", ndn_watershed)
 
     #get the 3D plot of the watershed images
-    plot_3D_image(normalize_colors(nsn_watershed))
+    plot_3D_image_cont(normalize_colors(nsn_watershed))
     ##load the saved images
     
 
