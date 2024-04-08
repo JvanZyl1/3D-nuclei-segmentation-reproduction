@@ -10,10 +10,10 @@ class DoubleConvolution(nn.Module):
         self.double_conv = nn.Sequential(
             nn.Conv3d(in_channels, out_channels_first, kernel_size, stride, padding),
             nn.BatchNorm3d(out_channels_first),
-            nn.LeakyReLU(inplace=True),
+            nn.ReLU(inplace=True),
             nn.Conv3d(out_channels_first, out_channels, kernel_size, stride, padding),
             nn.BatchNorm3d(out_channels),
-            nn.LeakyReLU(inplace=True)
+            nn.ReLU(inplace=True)
         )
 
     def forward(self, x):
@@ -105,17 +105,17 @@ class NDN(nn.Module):
         self.deconv = Deconvolution()
         self.conv = Conv(in_channels=24, kernel_size=1, stride=1, padding=0, filters=1)
 
-        self.double_conv_1 = DoubleConvolution(n_channels, 12, 24, 5, 1, 1)
-        self.double_conv_2 = DoubleConvolution(24, 24, 48, 5, 1, 1)
-        self.double_conv_3 = DoubleConvolution(48, 48, 96, 5, 1, 1)
-        self.double_conv_4 = DoubleConvolution(96, 96, 192, 5, 1, 1)
-        self.double_conv_5 = DoubleConvolution(192, 192, 384, 5, 1, 1)
-        self.double_conv_6 = DoubleConvolution(576, 192, 192, 5, 1, 1)
-        self.double_conv_7 = DoubleConvolution(288, 96, 96, 5, 1, 1)
-        self.double_conv_8 = DoubleConvolution(144, 48, 48, 5, 1, 1)
-        self.double_conv_9 = DoubleConvolution(72, 24, 24, 5, 1, 1)
+        self.double_conv_1 = DoubleConvolution(n_channels, 12, 24, 3, 1, 1)
+        self.double_conv_2 = DoubleConvolution(24, 24, 48, 3, 1, 1)
+        self.double_conv_3 = DoubleConvolution(48, 48, 96, 3, 1, 1)
+        self.double_conv_4 = DoubleConvolution(96, 96, 192, 3, 1, 1)
+        self.double_conv_5 = DoubleConvolution(192, 192, 384, 3, 1, 1)
+        self.double_conv_6 = DoubleConvolution(576, 192, 192, 3, 1, 1)
+        self.double_conv_7 = DoubleConvolution(288, 96, 96, 3, 1, 1)
+        self.double_conv_8 = DoubleConvolution(144, 48, 48, 3, 1, 1)
+        self.double_conv_9 = DoubleConvolution(72, 24, 24, 3, 1, 1)
 
-    def forward(self, x):  # can't chain max pool and double conv because the output of double conv is needed
+    def forward(self, x):
         x1 = self.double_conv_1(x)
         x2 = self.max_pool(x1)
         x3 = self.double_conv_2(x2)
