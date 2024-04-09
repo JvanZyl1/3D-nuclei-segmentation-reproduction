@@ -64,7 +64,7 @@ def run_watershed(nsn_output, ndn_output, slice):
 
 #function to plot 3d color image
 
-def plot_3D_image(data, sampling_rate=2, threshold=0.8):
+def plot_3D_image(data, sampling_rate=1, threshold=0.8):
     """
     Plots a 3D representation of an NSN watershed image with corresponding colors.
     
@@ -128,7 +128,10 @@ if __name__ == "__main__":
     #convert to numpy array
     ndn_output = ndn_output.detach().numpy()
     nsn_output = nsn_output.detach().numpy()
+    mask = mask.detach().numpy()
 
+    mask = mask.squeeze(0)
+    mask = mask[:, 32:-32, 32:-32]
     nsn_output = nsn_output[:, 32:-32, 32:-32]
     ndn_output = ndn_output[:, 32:-32, 32:-32]
     
@@ -151,31 +154,34 @@ if __name__ == "__main__":
     tifffile.imsave("watershed_images/ndn_watershed.tif", ndn_watershed)
 
     #get the 3D plot of the watershed images
-    plot_3D_image_cont(normalize_colors(nsn_watershed))
+    plot_3D_image(normalize_colors(nsn_watershed))
     ##load the saved images
     
 
 
     
-    """
+
     slice = 25
     #print(run_watershed(nsn_output, ndn_output))
     img_watershed, imgwatershedndn = run_watershed(nsn_output, ndn_output, slice)
-    padding = 32
+    padding = 3
     img_watershed = img_watershed[padding:-padding, padding:-padding]
     imgwatershedndn = imgwatershedndn[padding:-padding, padding:-padding]
+
     
     
 
     #plot img_watershed and nsn_output and ndn_outpu in subplot
-    fig, axs = plt.subplots(1, 3)
+    fig, axs = plt.subplots(1, 4)
     axs[0].imshow(nsn_output[slice], cmap='gray')
     axs[0].set_title("NSN output")
     axs[1].imshow(imgwatershedndn, cmap='gray')
     axs[1].set_title("NDN output")
     axs[2].imshow(img_watershed, cmap='gray')
     axs[2].set_title("Watershed output")
-    plt.show()"""
+    axs[3].imshow(mask[slice], cmap='gray')
+    axs[3].set_title("Ground Truth")
+    plt.show()
     
 
     """
