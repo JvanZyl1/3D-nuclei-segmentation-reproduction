@@ -38,7 +38,7 @@ def run_watershed(nsn_output, ndn_output, slice):
     opening = cv.morphologyEx(thresh,cv.MORPH_OPEN,kernel, iterations = 1)
     sure_bg = cv.dilate(opening,kernel,iterations=1)
     dist_transform = cv.distanceTransform(opening,cv.DIST_L2,5)
-    ret, sure_fg = cv.threshold(dist_transform,0.7*dist_transform.max(),255,0)
+    ret, sure_fg = cv.threshold(dist_transform,0.9*dist_transform.max(),255,0)
     sure_fg = np.uint8(sure_fg)
     unknown = cv.subtract(sure_bg,sure_fg)
     # Marker labelling
@@ -172,15 +172,16 @@ if __name__ == "__main__":
     
 
     #plot img_watershed and nsn_output and ndn_outpu in subplot
-    fig, axs = plt.subplots(1, 4)
+    fig, axs = plt.subplots(1, 3)
     axs[0].imshow(nsn_output[slice], cmap='gray')
     axs[0].set_title("NSN output")
-    axs[1].imshow(imgwatershedndn, cmap='gray')
+    axs[1].imshow(ndn_output[slice], cmap='gray')
     axs[1].set_title("NDN output")
     axs[2].imshow(img_watershed, cmap='gray')
     axs[2].set_title("Watershed output")
-    axs[3].imshow(mask[slice], cmap='gray')
-    axs[3].set_title("Ground Truth")
+    #axs[3].imshow(mask[slice], cmap='gray')
+    #axs[3].set_title("Ground Truth")
+    plt.savefig("watershed_images/2D_watershed_output.png")
     plt.show()
     
 
