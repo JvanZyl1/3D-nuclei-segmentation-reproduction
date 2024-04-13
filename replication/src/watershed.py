@@ -14,24 +14,22 @@ from skimage.color import gray2rgb
 
 
 def run_watershed_3d(nsn_output, ndn_output):
-    # Convert binary images to boolean
+    ##note: this doesnt use ndn_output at all, uses distance transform of nsn_output to find cell center##
+    #bool required for morphology
     nsn_output = nsn_output.astype(bool)
     ndn_output = ndn_output.astype(bool)
 
-    # Apply 3D morphological operations
     kernel = np.ones((3,3,3))
+    #binary opening removes small noise
     opening = morphology.binary_opening(nsn_output, kernel)
     sure_bg = morphology.binary_dilation(opening, kernel)
     dist_transform = distance_transform_edt(opening)
     sure_fg = dist_transform > 0.9 * dist_transform.max()
     unknown = sure_bg & ~sure_fg
-
-    # Marker labelling
-    markers, _ = label(sure_fg)  # Only keep the first item returned by label
+    markers, _ = label(sure_fg)
 
     markers[unknown] = 0
 
-    # Apply 3D watershed
     markers = watershed(-dist_transform, markers, mask=sure_bg)
 
     return markers
@@ -50,52 +48,39 @@ def plot_2D_markers(nsn_output, ndn_output, mask, markers, slice=25):
     axs[2].set_title("Watershed output")
     axs[3].imshow(mask[slice])
     axs[3].set_title("Ground truth")
+    plt.savefig("watershed_images/2D_slice.png")
     plt.show()
 
-def plot_3D_markers(marker_data, mask_data, sampling_rate=1):
-    """
-    Plots a 3D representation of an NSN watershed image with corresponding colors.
-    
-    Parameters:
-    - marker_data: A 3D numpy array with shape [Z, X, Y], representing the 3D marker image.
-    - mask_data: A 3D numpy array with shape [Z, X, Y], representing the 3D mask image.
-    - sampling_rate: An integer to downsample the data for visualization. Higher values result in fewer points plotted.
-    """
-    
-    # Ensure the data has the correct dimensions
-    if marker_data.ndim != 3 or mask_data.ndim != 3:
+def plot_3D_markers(data, mask_data, sampling_rate=1, data_type='Watershed'):
+    #sampling rate used to reduce points plotted
+
+    #check dimesnions
+    if data.ndim != 3 or mask_data.ndim != 3:
         raise ValueError("Data must be a 3D numpy array.")
     
     fig = plt.figure(figsize=(20, 10))
-    titles = ['Marker Image', 'Mask Image']
+    titles = [data_type + ' Image', 'Mask Image']
 
-    for i, (data, title) in enumerate(zip([marker_data, mask_data], titles), start=1):
-        # Extract the coordinates where the voxel should be plotted based on the sampling rate
+    for i, (data, title) in enumerate(zip([data, mask_data], titles), start=1):
         z, x, y = np.where(data > 0)
         z, x, y = z[::sampling_rate], x[::sampling_rate], y[::sampling_rate]
-        
-        # Extract corresponding colors for each voxel
         unique_markers = np.unique(data)
         colors = plt.cm.jet(np.linspace(0, 1, len(unique_markers)))
         color_dict = {marker: color for marker, color in zip(unique_markers, colors)}
         voxel_colors = [color_dict[marker] for marker in data[z, x, y]]
-        
-        # Create a 3D plot
+
         ax = fig.add_subplot(1, 2, i, projection='3d')
-        ax.set_title(title)  # Set the title for the subplot
+        ax.set_title(title)
         
-        # Scatter plot, each point with its corresponding color
         ax.scatter(x, y, z, c=voxel_colors, marker='o')
         
-        # Set labels
         ax.set_xlabel('X Label')
         ax.set_ylabel('Y Label')
         ax.set_zlabel('Z Label')
     
-    # Show the plot
-    plt.savefig("watershed_images/3D_watershed_output.png")
+    path = f"watershed_images/3D_{data_type}_output.png"
+    plt.savefig(path)
     plt.show()
-    #save image
     
 
     
@@ -110,7 +95,7 @@ if __name__ == "__main__":
     #note: model trained on CUDA, use map_location input to load model on CPU
     ndn_model.load_state_dict(torch.load("replication/src/ndn (1).pth", map_location=torch.device('cpu')))
     nsn_model.load_state_dict(torch.load("replication/src/nsn.pth", map_location=torch.device('cpu')))
-    #get test images and test ground truth
+    #get test images and test ground truth (QCANet)
     images_dir = os.path.join("data", "images", "test", "Images")
     ground_truth_dir = os.path.join("data", "GroundTruth", "test",
                                         "GroundTruth_QCANet")
@@ -153,7 +138,11 @@ if __name__ == "__main__":
 #   tifffile.imsave("watershed_images/watershed_output_3D.tif", markers)
 
     #plot 3D markers
-    plot_3D_markers(markers, mask)
+    plot_3D_markers(markers, mask, data_type='Watershed')
+
+    #plot 3D nsn and ndn output 
+    plot_3D_markers(nsn_output, mask, data_type='NSN')
+    plot_3D_markers(ndn_output, mask, data_type='NDN')
 
     slice = 25
     plot_2D_markers(nsn_output, ndn_output, mask, markers, slice=slice)
