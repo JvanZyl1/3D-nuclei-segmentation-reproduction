@@ -1,36 +1,28 @@
 from cell_dataset import CellDataset
+from metrics import Metrics, IoU, SEG, MuCov
 import os, torch
 from unet_3d import NSN, NDN
 import cv2 as cv
 import numpy as np
 import matplotlib.pyplot as plt
 import tifffile
-from scipy.ndimage import morphology, distance_transform_edt
+from scipy.ndimage import label, binary_opening, binary_dilation
 from skimage.segmentation import watershed
-from scipy.ndimage import label
-from skimage.segmentation import find_boundaries
-from skimage import img_as_ubyte
-from skimage.color import gray2rgb
-
 
 def run_watershed_3d(nsn_output, ndn_output):
-    ##note: this doesnt use ndn_output at all, uses distance transform of nsn_output to find cell center##
-    #bool required for morphology
+    # Convert to bool for morphology operations
     nsn_output = nsn_output.astype(bool)
     ndn_output = ndn_output.astype(bool)
 
     kernel = np.ones((3,3,3))
-    #binary opening removes small noise
-    opening = morphology.binary_opening(nsn_output, kernel)
-    sure_bg = morphology.binary_dilation(opening, kernel)
-    dist_transform = distance_transform_edt(opening)
-    sure_fg = dist_transform > 0.9 * dist_transform.max()
-    unknown = sure_bg & ~sure_fg
-    markers, _ = label(sure_fg)
+    #remove small unwqnted noise
+    opening = binary_opening(nsn_output, kernel)
+    sure_bg = binary_dilation(opening, kernel)
 
-    markers[unknown] = 0
+    #convert ndn_output so that each cell center has different int value
+    markers, _ = label(ndn_output)
 
-    markers = watershed(-dist_transform, markers, mask=sure_bg)
+    markers = watershed(np.logical_not(nsn_output), markers, mask=sure_bg)
 
     return markers
 
@@ -102,47 +94,61 @@ if __name__ == "__main__":
     
     ##LOAD TEST IMAGES AND GROUND TRUTH FOR QCANet##
     dataset = CellDataset(images_dir=images_dir, masks_dir=ground_truth_dir)
+    #loop over all images in the test set
+    iou_sum = 0
+    seg_sum = 0
+    mucov_sum = 0
+    for i in range(len(dataset)):
 
-    image, mask = dataset[5]
+        image, mask = dataset[i]
 
-    nsn_output = nsn_model.forward(image.unsqueeze(0)).squeeze(0)
-    ndn_output = ndn_model.forward(image.unsqueeze(0)).squeeze(0)
+        nsn_output = nsn_model.forward(image.unsqueeze(0)).squeeze(0)
+        ndn_output = ndn_model.forward(image.unsqueeze(0)).squeeze(0)
 
-    ndn_output = ndn_output.squeeze(0)
-    nsn_output = nsn_output.squeeze(0)
-    mask = mask.squeeze(0)
+        ndn_output = ndn_output.squeeze(0)
+        nsn_output = nsn_output.squeeze(0)
+        mask = mask.squeeze(0)
 
-    #convert raw output data values to probability between 0 and 1
-    nsn_output = torch.sigmoid(nsn_output)
-    ndn_output = torch.sigmoid(ndn_output)
+        #convert raw output data values to probability between 0 and 1
+        nsn_output = torch.sigmoid(nsn_output)
+        ndn_output = torch.sigmoid(ndn_output)
 
-    #convert the outputs to binary (0 for background, 1 for cell/cell center) 
-    nsn_output = (nsn_output > 0.5).detach().numpy().astype(np.uint8)
-    ndn_output = (ndn_output > 0.5).detach().numpy().astype(np.uint8)
-    mask = mask.detach().numpy()
+        #convert the outputs to binary (0 for background, 1 for cell/cell center) 
+        nsn_output = (nsn_output > 0.5).detach().numpy().astype(np.uint8)
+        ndn_output = (ndn_output > 0.5).detach().numpy().astype(np.uint8)
+        mask = mask.detach().numpy()
+        
+        #remove mirror padding
+        mask = mask[:, 32:-32, 32:-32]
+        nsn_output = nsn_output[:, 32:-32, 32:-32]
+        ndn_output = ndn_output[:, 32:-32, 32:-32]
+        
+
+        ##RUN WATERSHED AND PLOT/SAVE RESULTS##
+
+        markers = run_watershed_3d(nsn_output, ndn_output)
+        
+        plot = False
+        if plot:
+            plot_3D_markers(markers, mask, data_type='Watershed')
+
+            #plot 3D nsn and ndn output 
+            plot_3D_markers(nsn_output, mask, data_type='NSN')
+            plot_3D_markers(ndn_output, mask, data_type='NDN')
+
+            slice = 25
+            plot_2D_markers(nsn_output, ndn_output, mask, markers, slice=slice)
+
+
+        metrics = Metrics(IoU, SEG, MuCov)
+        iou = metrics.iou(torch.tensor(markers), torch.tensor(mask))
+        seg = metrics.seg(torch.tensor(markers), torch.tensor(mask))
+        mucov = metrics.mucov(torch.tensor(markers), torch.tensor(mask))
+
+        iou_sum += iou
+        seg_sum += seg
+        mucov_sum += mucov
     
-    #remove mirror padding
-    mask = mask[:, 32:-32, 32:-32]
-    nsn_output = nsn_output[:, 32:-32, 32:-32]
-    ndn_output = ndn_output[:, 32:-32, 32:-32]
-    
-
-    ##RUN WATERSHED AND PLOT/SAVE RESULTS##
-
-    markers = run_watershed_3d(nsn_output, ndn_output)
-    
-#   #save markers to tiff file
-#   #make directory if it does not exist
-#   if not os.path.exists("watershed_images"):
-#       os.makedirs("watershed_images")
-#   tifffile.imsave("watershed_images/watershed_output_3D.tif", markers)
-
-    #plot 3D markers
-    plot_3D_markers(markers, mask, data_type='Watershed')
-
-    #plot 3D nsn and ndn output 
-    plot_3D_markers(nsn_output, mask, data_type='NSN')
-    plot_3D_markers(ndn_output, mask, data_type='NDN')
-
-    slice = 25
-    plot_2D_markers(nsn_output, ndn_output, mask, markers, slice=slice)
+    print(f"Average IoU: {iou_sum/len(dataset)}")
+    print(f"Average SEG: {seg_sum/len(dataset)}")
+    print(f"Average MuCov: {mucov_sum/len(dataset)}")
