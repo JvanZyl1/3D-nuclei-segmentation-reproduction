@@ -195,33 +195,26 @@ Conventionally this is used to measure false positive (FP) or false
 negative (FN) rates, however it cannot identify instance segmentation as
 it looks at all the cells.
 
-$$IoU = \frac{TP}{TP + FP + FN}
-    \label{eq:IoU}$$
+$$IoU = \frac{TP}{TP + FP + FN}$$
 
 <img src="figures/IoU_png.png" style="height:3cm" alt="image" />
-<span id="fig:iou" label="fig:iou"></span>
 
 Semantic Evaluation using Geodesic distances or SEG reviews the accuracy
 of the image segmentation, as in how closely the segmentation from the
 network matches that of the ground truth segmentation.
-<a href="#eq:SEG" data-reference-type="autoref"
-data-reference="eq:SEG">[eq:SEG]</a> is the mathematical notation for
+Below is the mathematical notation for
 SEG, in essence it is the sum over all ground truths, where for each one
 the maximum IoU is computed with respect to the prediction of the
 network, before being normalised by the total number of predictions.
 Here it evaluates the absence of FNs.
 
-$$SEG = \sum_{j}^{N_i} \frac{1}{N_i}  \max_i IoU(y_i, y_j^*)
-\label{eq:SEG}$$
+$$SEG = \sum_{j}^{N_i} \frac{1}{N_i}  \max_i IoU(y_i, y_j^*)$$
 
 The Mean Unweighted Coverage (MUCov), is alike to SEG however in the
-perspective of the predicted output, as shown by
-<a href="#eq:MUCov" data-reference-type="autoref"
-data-reference="eq:MUCov">[eq:MUCov]</a>. Here it evaluates the absence
-of FPs.
+perspective of the predicted output, as shown below. 
+Here, it evaluates the absence of FPs.
 
-$$MUCov = \sum_{i}^{N_j} \frac{1}{N_j}  \max_j IoU(y_i, y_j^*)
-\label{eq:MUCov}$$
+$$MUCov = \sum_{i}^{N_j} \frac{1}{N_j}  \max_j IoU(y_i, y_j^*)$$
 
 ## Results
 
@@ -276,9 +269,6 @@ intermediate images, for an image in the test set:
 <img src="figures/dl_1.png" alt="image" style="height:5cm" />
 <img src="figures/dl_5.png" alt="image" style="height:5cm" />
 
-<img src="figures/3D_NSN_output.png" alt="image" style="height:5cm" />
-<img src="figures/3D_NDN_output.png" alt="image" style="height:5cm" />
-<img src="figures/3D_watershed_output.png" alt="image" style="height:5cm" />
 
 ## Discussion
 
