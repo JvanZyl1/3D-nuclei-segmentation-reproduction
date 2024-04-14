@@ -1,3 +1,12 @@
+---
+author:
+- Ugo Coveliers-Munzi (5007631), Aral de Moor (931604[^1]), Dani Rogmans
+  (4885279), Jonathan van Zyl (5039738)
+bibliography:
+- main.bib
+title: 3D convolutional neural networks-based segmentation to acquire
+  quantitative criteria of the nucleus during mouse embryogenesis
+---
 
 # Introduction {#sec:introduction}
 
@@ -28,7 +37,7 @@ success/lack thereof of our approach, The ultimate aim is to apply this
 trained network to perform segmentation of the protein structures within
 a yeast cell where cell multiplication occurs to facilitate research on
 this topic.
-<!-- 
+
 # Background {#sec:background-and-related-work}
 
 In the world of image processing, semantic segmentation maps a part of
@@ -395,4 +404,4 @@ to reproduce the method successfully. However, a lot of choices had to
 be made by us instead of blindly following the choices of the authors,
 and an exact reproduction is therefore not very easy to achieve.
 
-[^1]: Employee Number -->
+[^1]: Employee Number
