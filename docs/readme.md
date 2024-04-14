@@ -39,7 +39,7 @@ success/lack thereof of our approach, The ultimate aim is to apply this
 trained network to perform segmentation of the protein structures within
 a yeast cell where cell multiplication occurs to facilitate research on
 this topic.
-
+<!-- 
 # Background
 
 In the world of image processing, semantic segmentation maps a part of
@@ -414,4 +414,4 @@ to reproduce the method successfully. However, a lot of choices had to
 be made by us instead of blindly following the choices of the authors,
 and an exact reproduction is therefore not very easy to achieve.
 
-[^1]: Employee Number
+[^1]: Employee Number -->
