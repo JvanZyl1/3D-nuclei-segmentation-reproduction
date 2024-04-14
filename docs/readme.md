@@ -6,7 +6,7 @@ author:
 - Jonathan van Zyl (5039738)
 bibliography:
 - main.bib
-title: 3D convolutional neural networks-based segmentation to acquire
+title: Segmenting
   quantitative criteria of the nucleus during mouse embryogenesis
 ---
 
