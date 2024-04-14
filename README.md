@@ -10,10 +10,10 @@ Tags: `3D image segmentation`, `Mask R-CNN`, `fluorescense microscopy`, `live ce
 [`Planning`](./replication/readme.md)
 
 Reproducibility Assignment for TU Delft MSc. CS4240 "Deep Learning" (2023/24). Group consists of:
-  - Covielers-Munzi, Ugo (MSc Aerospace Engineering, Control and Simulation)
-  - de Moor, Aral 
-  - Rogmans, Dani (MSc Computer Science)
-  - van Zyl, Jonathan (MSc Aerospace Engineering, Control and Simulation)
+  - Ugo Covielers-Munzi (MSc Aerospace Engineering, Control and Simulation)
+  - Aral de Moor
+  - Dani Rogmans (MSc Computer Science)
+  - Jonathan van Zyl (MSc Aerospace Engineering, Control and Simulation)
 
 #### Replication Package
 Our replication code is under [`replication`](./replication) directory, as well as an accompanying `requirements.txt`. 
