@@ -1,52 +1,46 @@
-<!-- ---
+---
 author:
 - Ugo Coveliers-Munzi (5007631)
-- Aral de Moor (931604[^1])
+- Aral de Moor (931604[^1] )
 - Dani Rogmans (4885279)
 - Jonathan van Zyl (5039738)
 bibliography:
 - main.bib
 title: 3D convolutional neural networks-based segmentation to acquire
   quantitative criteria of the nucleus during mouse embryogenesis
---- -->
+---
 
 # Introduction
 
-In the study of embryonic development, a number of studies have Some of
-these studies in the field of segmentation algorithms in bioimage
-processing have shown how the optimal parameters depend on each image
-and the microscopy system used; with these parameters being set
-heuristically it becomes hard to acquire qualitative criteria using
-existing methods. With regard to fluorescence microscopic imaging, a
-time series of $\mathbb R^3$ images analysis is difficult as the
-fluorescence intensity decreases along the z-axis, because the innermost
-part of the embryo is not fully transparent. Furthermore, fluorophore
-fading causes decreasing fluorescence intensity with time.
+During embryogenesis, cells repeatedly divide and dynamically change
+their position in 3D space, resulting in a highly dynamic environment. A
+number of studies have tried to acquire quantitative criteria such as
+chromosome numbers, the synchrony of cell division, and the rate of
+development, using image segmentation.
 
-set about to solve these problems in the paper titled: *‘3D
-convolutional neural networks-based segmentation to acquire quantitative
-criteria of the nucleus during mouse Embryogenesis’*. They propose
-Quantitative Criteria Acquisition Network (QCANet): a CNN-based instance
-segmentation algorithm for 3D fluorescent microscopic images of cell
-nuclei of early embryos. the model builds on 3D-UNET proves to be better
-at joint semantic and instance segmentation, considering the base UNET
-as baseline. Accomplished by \<novel approach summarised here\>
+However, the existing solutions have abritrarily-determined
+hyperparameters, and low segmentation accuracy due to suboptimal
+analysis of spatiotemporal variations in the time-series data. With
+regard to fluorescence microscopic imaging, a time series of
+$\mathbb R^3$ images analysis is difficult as the fluorescence intensity
+decreases along the z-axis, because the innermost part of the embryo is
+not fully transparent. Furthermore, fluorophore fading causes decreasing
+fluorescence intensity with time.
 
-In our reproduction, we first explain the theoretical basis behind the
-paper . In our \<constraints here\> training setup, we find that
-\<results here\>, indicating that \<implications here\> Given the
-success/lack thereof of our approach, The ultimate aim is to apply this
-trained network to perform segmentation of the protein structures within
-a yeast cell where cell multiplication occurs to facilitate research on
-this topic.
+propose QCANet to generalise and improve segmentation accuracy of 3D
+fluorescence microscopic images. They show that by decomposing the task
+into separate convolutional neural networks (CNNs) responsible for
+semantic and instance segmentation, they can outperform the 3D U-Net
+baseline . In this post, we try to replicate their results and highlight
+discrepancies in our reproduction ().
 
 # Background
 
-In the world of image processing, semantic segmentation maps a part of
-an image to a class. E.g. in , the cat, trees, sky and ground are shown.
-Whereas, instance segmentation partitions this class into distinct
-individual instances. For example shows who the people are divided into
-individual persons,
+In the world of image processing, **semantic** segmentation refers to
+labelling each voxel in an image with the correct class. E.g. in , the
+cat, trees, sky and ground are shown. Whereas **instance** segmentation
+partitions this class into distinct instances. E.g. divides a group of
+people into individuals.
 
 <figure id="fig:instance-segmentation">
 <figure id="fig:semantic-segmentation">
@@ -72,10 +66,10 @@ data-cites="Folio3SemanticVsInstance"></span></figcaption>
 
 ## QCANet Architecture
 
-The QCANet architecture consists of two neural networks which, when
-combined, can perform instance segmentation of the nuclei. Namely, the
-Nuclear Segmentation Network (NSN) and the Nuclear Detection Network
-(NDN). These two networks operate on the input individually, as seen in
+As shown in , QCANet consists of two subnetworks: *Nuclear Segmentation
+Network* (NSN), and *Nuclear Detection Network* (NDN); responsible for
+semantic segmentation and instance segmentation. These two networks
+operate on the input individually, as seen in
 <a href="#fig:segmentation-pipeline" data-reference-type="autoref"
 data-reference="fig:segmentation-pipeline">[fig:segmentation-pipeline]</a>,
 and their outputs are then combined in the post processing phase.
@@ -88,19 +82,18 @@ of 3D convolutional layers, max pooling layers aswell as deconvolution
 and concatenation (an output from a previous downsampling layer is
 concatenated with the output at the current, upsampled layer to ensure
 that enough information is present when upscaling by adding back
-features found in previous layers) layers based on the UNET-3D
-architecture. The final layer is then passed through a softmax function
+features found in previous layers) layers based on the 3D U-NET
+architecture . The final layer is then passed through a softmax function
 to convert the numerical output into values between 0 and 1 denoting the
 probability that the specific voxel represents part of a nucleus.
 
-The primary objective of the NDN is to output a mask with the
-coordinates of the nuclear center of each nucleus present in the 3D
-image. This, when combined with the output of the NSN allows the QCANet
-to perform instance segmentation on individual nuclei. As with the NSN
-the architecture is based on the UNET-3D architecture and, although many
-more layers are used, they can once again be broken down into
-convolutional, max pooling, deconvolution and concatenation layers. As
-in the NSN, the output is passed through a softmax function.  
+The NDN, on the other hand, learns to fully mask an image except for the
+nuclear centres. This, when combined with the output of the NSN allows
+the QCANet to perform instance segmentation on individual nuclei. As
+with the NSN the architecture is based on the UNET-3D architecture and,
+although many more layers are used, they can once again be broken down
+into convolutional, max pooling, deconvolution and concatenation layers.
+As in the NSN, the output is passed through a softmax function.
 
 ## Pre-Processing
 
@@ -114,41 +107,27 @@ Another pre-processing step we perform is padding, which is done to
 ensure that all images are of the same size. As the background around
 the edges is slightly noisy and does not consist of strictly zero
 values, mirror padding seems to be most appropriate to end up with a
-consistent processed image.
+consistent processed image. The QCANet authors further implement data
+augmentation by flipping each image along its x and y dimensions, to
+address their small training set size.
 
-However, the authors of QCANet propose and implement heavy data
-augmentation, which comes maninly in the form of image flipping along
-the *x* and *y* dimensions. This is most likely done because the
-datasets available on cell embryogenesis usually consist of a times
-series of a few frames, and more data is needed to properly train the
-model. 3D data could also require a more extensive dataset compare to 2D
-images because of the curse of dimensionality; in this case, data
-augmentation is a helpful step to combat this problem. In our case, we
-found that following the data augmentation steps the paper proposed made
-the training take at least 4 times as long. Given the limited amount of
-time to reproduce the project, and the extra training time overhead that
-data augmentation added, we decided against following this
-pre-processing step.
+While data augmentation quadruples the training set size, it also makes
+training take four times as long. Given the limited amount of time to
+reproduce the project, and the extra training time overhead that data
+augmentation added, we decided against following this pre-processing
+step.
 
 ## Post-Processing
 
-When the outputs of the the NSN and NDN are found, there need to be
-combined, the way chosen to do this is marker-based watershed
-transformation. Before the transformation the mirror padding is removed
-from the image and it is re-interpolated to restore it’s original
-resolution.
-
-Watershed take in ground truth makers, which are the output of the NDN;
-indicating the centres of the nuclei.The NSN is used to segment the NSN,
-then marker-based watershed "floods" the central markers to accurately
-separate each nucleus. The use of the NDN markers prevents
-over-segmentation as flood is less likely to be affected by noise or
-artifacts, improving accuracy of the segmentation; essential for
-acquiring quantitative criteria from the divided image (i.e.) due to a
-more accurate instance segmentation. An illustrative example of this
-process is shown in
+When the outputs of the the NSN and NDN are found, they need to be
+combined. To complete QCANet’s cell-instance segmentation, marker-based
+watershed divides the semantic segmentation region with the identified
+centres as markers. An illustrative example of this process is shown in
 <a href="#fig:watershed" data-reference-type="autoref"
-data-reference="fig:watershed">[fig:watershed]</a>.
+data-reference="fig:watershed">[fig:watershed]</a>. Watershed ‘floods’
+the central markers to accurately separate each nucleus; which helps in
+preventing over-segmentation as the flood is less likely to be affected
+by noise or artifacts.
 
 <figure id="fig:watershed">
 <img src="figures/WaterShed.png" />
@@ -163,49 +142,36 @@ data-cites="MathWorksWatershed"></span></figcaption>
 The dataset consists of a series of frames, each one of them being a 3D
 image of cells. The entire series of frames, when appended and watched
 as a short film, shows the cells’ movements and their process of
-splitting.
+splitting. The authors manually labelled a ground truth for the training
+set at 11 time points in 11 mouse embryos.
 
 Although our network was trained on this specific dataset, inference can
 be done on all datasets with similar 3D images of cells. However, our
-current codebase was only tested on *.tiff* files, which are made of 2D
+current codebase was only tested on `tiff` files, which are made of 2D
 frames that are stacked on top of each other to create a 3D image.
-Adjustments would most likely have to be made to run inference if the
-input file format were different.
 
 ## Training Setup
 
-Before training, the data must be preprocessed to ensure the required
-format for the network. This starts by normalising the voxels to take
-values between 0 and 1. This is then followed by first adding
-zero-padding to the image borders to ensure all images are square (will
-be explained later) as well as applying mirror padding to the outermost
-64 pixels on each x-y slice of the image to ensure the convolution can
-be applied to the edges of the image without losing information. After
-this, the images are interpolated 2.1875 in the z direction (i.e extra
-slices are generated in the z direction) by using bicubic interpolation
-to ensure an isotropic resolution (initially the resolution is
-0.8:0.8:1.75 $\mu m$.
-
 ### Training Dice Loss
 
-For both the NSN and NDN, the loss function used is called the dice
-loss. The Dice loss is a common loss function for image segmentation
-which measures the overlap between the predicted and target masks. In
-addition, the dice loss also solves another important problem; the
-unbalance between the labels (the number of pixels or voxels in the
-background and objects). In the segmentation task, it is often a problem
-that labels (the number of pixels or voxels in the background and
-objects) are not balanced; the use of dice loss function as an objective
-function can suppress the influence of dataset label imbalance.
+Both the NSN and NDN use dice loss. The Dice loss is a common loss
+function for image segmentation which measures the overlap between the
+predicted and target masks. In addition, the dice loss also solves
+another important problem: the unbalance between the labels (the number
+of pixels or voxels in the background and objects). In the segmentation
+task, it is often a problem that labels (the number of pixels or voxels
+in the background and objects) are not balanced; the use of dice loss
+function as an objective function can suppress the influence of dataset
+label imbalance.
 
-For boolean data (0 or 1) the equation is as follows
+For boolean data (0 or 1) the equation is as follows:
+
 $$DL = 1- DC = 1 - \frac{2 \cdot TP}{|y| + |\hat{y}|}$$
 
 ### NSN and NDN Hyperparameters
 
-Having defined the loss function used in training, the actual training
-of the networks was done. The hyperparameters and optimization algorithm
-used for both networks can be found in
+The hyperparameters and optimization algorithm used for both networks
+can be found in
 <a href="#tab:hyper_summary" data-reference-type="autoref"
 data-reference="tab:hyper_summary">[tab:hyper_summary]</a>. It must be
 noted that the learning rate for the NSN was increased compared to the
@@ -215,11 +181,11 @@ would not decrease while training.
 <div id="tab:hyper_summary">
 
 |               | **NSN** | **NDN** |
-|:-------------:|:-------:|:-------:|
-|   Optimizer   |   SGD   |   SGD   |
-| Learning rate |   0.1   |   0.1   |
-|  Batch Size   |    4    |    4    |
-|  num Epochs   |   80    |   150   |
+|:--------------|--------:|--------:|
+| Optimizer     |     SGD |     SGD |
+| Learning rate |     0.1 |     0.1 |
+| Batch Size    |       4 |       4 |
+| num Epochs    |      80 |     150 |
 
 The hyperparameters used to train each model
 
@@ -249,7 +215,8 @@ the maximum IoU is computed with respect to the prediction of the
 network, before being normalised by the total number of predictions.
 Here it evaluates the absence of FNs.
 
-$$SEG = \sum_{j}^{N_i} \frac{1}{N_i}  \max_i IoU(y_i, y_j^*)$$
+$$SEG = \sum_{j}^{N_i} \frac{1}{N_i}  \max_i IoU(y_i, y_j^*)
+\label{eq:SEG}$$
 
 The Mean Unweighted Coverage (MUCov), is alike to SEG however in the
 perspective of the predicted output, as shown by
@@ -257,30 +224,34 @@ perspective of the predicted output, as shown by
 data-reference="eq:MUCov">[eq:MUCov]</a>. Here it evaluates the absence
 of FPs.
 
-$$MUCov = \sum_{i}^{N_j} \frac{1}{N_j}  \max_j IoU(y_i, y_j^*)$$
-
-For information on the nomenclature used, see Equation 4,5 and 6 of the
-paper.  
+$$MUCov = \sum_{i}^{N_j} \frac{1}{N_j}  \max_j IoU(y_i, y_j^*)
+\label{eq:MUCov}$$
 
 # Results
 
-# Learning curves
+## Learning curves
 
-Figure 5 and 6 below show the learning curves for the NSN and the NDN
+The two figures below show the learning curves for the NSN and the NDN
 training and validation loss per epoch, respectively.
 
 <img src="figures/nsn_loss.jpeg" alt="image" />
 <img src="figures/ndn_loss.jpeg" alt="image" />
 
+And below are the IoU scores over epochs for the NSN and NDN networks,
+respestively.
+
+<img src="figures/nsn_iou.jpeg" alt="image" />
+<img src="figures/ndn_iou.jpeg" alt="image" />
+
 ## Quantitative results compared to the original paper
 
 After training our two networks and implementing the post-processing
-steps, it was time to evalute is against the original paper. For the
+steps, it was time to evaluate is against the original paper. For the
 three previously mentioned metrics, we ran inference on our version of
 the QCANet, over all images in the test set. The results, as compared to
-the original QCANet, can be seen in Table 3.
+the original QCANet, can be seen in .
 
-<div id="tab:hyper_summary">
+<div id="tab:results-comparison">
 
 |                    |  IoU  |  SEG  | MuCov |
 |:------------------:|:-----:|:-----:|:-----:|
@@ -292,17 +263,22 @@ results of the original paper
 
 </div>
 
-From Table 2, we can see that our results are definitely far worse than
-those of the paper, specifically for the SEG and MuCov metrics. Since
-the IoU for our implementation is quite good and it is a semantic
-segmentation metric, it is clear that the NDN is the component that is
-lacking. In the next section, some discussion around why this
-discrepancy happened will take place.
+Evidently, our results are far worse than those cited in the paper,
+specifically for the SEG and MuCov metrics. Since the IoU for our
+implementation is quite good and it is a semantic segmentation metric,
+it is clear that the NDN is the component that is lacking. We discuss
+the quantitative discrepancy further in .
 
 Although we achieved much worse quantitative results than the original
 paper, we are quite happy with the way the output images look, in a
-visual sense. Here are some examples, for different images in the test
-set:
+visual sense. Here is an example of the pipeline running with all
+intermediate images, for an image in the test set:
+
+<img src="figures/dl_2.png" alt="image" />
+<img src="figures/dl_3.png" alt="image" />
+<img src="figures/dl_4.png" alt="image" />
+<img src="figures/dl_1.png" alt="image" />
+<img src="figures/dl_5.png" alt="image" />
 
 ![image](Figures/3D_NSN_output.png){width="\\textwidth"}
 ![image](Figures/3D_NDN_output.png){width="\\textwidth"}
@@ -319,24 +295,23 @@ set:
 Although the QCAnet was correclty implemented, in the sense that we can
 now perform satisfactory instance segmentation on 3D images of cells,
 the quantitative results we achieved are not very close to the paper and
-lack to varrying degrees in all three metrics.
+lack to varying degrees in all three metrics.
 
 Implementing the NSN and the NDN were not daunting tasks, and we were
 able to get the architectures correct within a few hours. The most time
 consuming task was training, which required us to tweak parameters
 multiple times, run multiple training runs that stop early, and
-experiment until we got satisfactory training curves. Given that we had
-limited time and limited Kaggle credits to train, we did not implement
-data augmentation, which would have quadrupled the number of training
-instances in our dataset and most likely led to even better results.
-This is most likely the biggest gap between our implementation and the
-paper’s implementation.
+experiment until we got satisfactory training curves. Ironically,
+claimed QCANet would relieve this heuristic, application-dependent
+hyperparameter search.
 
-This discrepancy in results can come also from limitations which are in
-general due to inconsistencies in the paper and personal choices we made
-in order to get a working result instead of a very precise one. The
-inconsistencies in the paper and the choices we made with regards to
-hyperparameters are discussed in the next section.
+Given that we had limited time and limited Kaggle credits to train, we
+did not implement data augmentation, which would have quadrupled the
+number of training instances in our dataset and most likely led to even
+better results. This is most likely the biggest gap between our
+implementation and the paper’s implementation. Further inconsistencies
+that we took in order to get a working result instead of a very precise
+one, are discussed in the following section ().
 
 ## Reproducibility Assessment
 
@@ -360,10 +335,11 @@ Leaving the choice of hyperparameters and architectures to the person
 reproducing the method is especially important in the case of the NDN.
 Here, the paper proposes a huge network that has too many steps in the
 down (convolutional and max pool) direction and in the upwards
-(convolution and upsample) directions. Such a large has millions of more
-parameters than the standard 3D Unet and is not needed. If the goal were
-to reproduce the approach to an acceptable level and not the results
-specifically, we recommend a standard 3D Unet for the NDN.
+(convolution and upsample) directions. NDN has millions of extra
+parameters than the standard 3D U-NET and it is likely that not all are
+necessary. If the goal were to reproduce the approach to an acceptable
+level and not the results specifically, we recommend a standard 3D U-NET
+for the NDN.
 
 The paper also uses strange hyperparameters that are not well motivated,
 like a kernel size of 5 for the NDN which is not standard. The
@@ -378,8 +354,8 @@ the kernel size to 3 or adding a padding of 4 to the last layer. In the
 end, we changed the kernel size of each convolutional layer in the NDN
 to 3.
 
-Here is the full list of hyperparameters we unfortunately had to specify
-differently in order to get acceptable instance segmentation results:
+Here is the full list of hyperparameters we had to specify differently
+in order to get acceptable instance segmentation results:
 
 - Optimizer: the paper proposed Adam as an optimizer for the NDN, which
   can be more stable than SGD thanks to the momentum and RMSprop
@@ -390,10 +366,10 @@ differently in order to get acceptable instance segmentation results:
   this case.
 
 - Learning rate: Instead of 0.01, we actually used a very high learning
-  rte of 0.1. It seems as though the search space is very flat, and a
+  rate of 0.1. It seems as though the search space is very flat, and a
   lot of iterations are needed to reach areas of high gradients. A
   learning rate of 0.1 sped up the process of reaching points where the
-  dice loss would decrease.
+  dice loss would decrease, at a certain IoU it was decreased to 0.02.
 
 - NDN architecture: as previously mentioned, the NDN was modified to
   have a kernel size of 3 instead of a kernel size of 5.
@@ -408,10 +384,9 @@ differently in order to get acceptable instance segmentation results:
 
 As for comparing the results of the QCAnet with current
 state-of-the-arts methods in instance segmentation, only Mask-RCNN can
-be used in a fair comparison using the metrics stated. The paper weirdly
-compares their approach to the traditional 3D-Unet, which makes no sense
-because the traditional 3D-Unet is designed for semantic segmentation
-and not instance segmentation.
+be used in a fair comparison using the metrics stated. The paper
+unfairly compares their approach to the traditional 3D U-NET, which is
+designed for semantic segmentation and not instance segmentation.
 
 # Conclusion
 
@@ -421,5 +396,16 @@ post-processing in the form of marker-based watershed, and we were able
 to reproduce the method successfully. However, a lot of choices had to
 be made by us instead of blindly following the choices of the authors,
 and an exact reproduction is therefore not very easy to achieve.
+
+# Task Distribution
+
+| **Member** | **Tasks**                                                                                           |
+|:-----------|:----------------------------------------------------------------------------------------------------|
+| Dani       | Building NSN and NDN network, training them, implementing pre-processing in Kaggle, dice loss. Blog |
+| Ugo        | Pre-Processing, Metrics, Watershed, Graph visualisation. Blog                                       |
+| Jonathan   | Pre-Processing, Metrics, Training NDN. Blog. Help with watershed                                    |
+| Aral       | Poster and Blog. Original QCANET implementation & original metrics attempt.                         |
+
+Tasks assigned to each team member
 
 [^1]: Employee Number
