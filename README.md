@@ -2,7 +2,7 @@
 > Please do not add `.idea` or empty files to the repository
 
 
-## An Ensemble Learning and Slice Fusion Strategy for Three-Dimensional Nuclei Instance Segmentation
+## 3D Convolutional neural networks-based segmentation to acquire quantitative criteria of the nucleus during mouse embryogenesis.
 Tags: `3D image segmentation`, `Mask R-CNN`, `fluorescense microscopy`, `live cell data`
 
 [`Paper`](https://www.nature.com/articles/s41540-020-00152-8) 
