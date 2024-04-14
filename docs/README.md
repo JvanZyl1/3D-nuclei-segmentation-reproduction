@@ -24,11 +24,11 @@ decreases along the z-axis, because the innermost part of the embryo is
 not fully transparent. Furthermore, fluorophore fading causes decreasing
 fluorescence intensity with time.
 
-Tokuoka et al.[^2] propose QCANet to generalise and improve segmentation accuracy of 3D
+Tokuoka et al.[^qcanet] propose QCANet to generalise and improve segmentation accuracy of 3D
 fluorescence microscopic images. They show that by decomposing the task
 into separate convolutional neural networks (CNNs) responsible for
 semantic and instance segmentation, they can outperform the 3D U-Net
-baseline . In this post, we try to replicate their results and highlight
+baseline[^3dunet]. In this post, we try to replicate their results and highlight
 discrepancies in our reproduction.
 
 ## Background
@@ -58,11 +58,6 @@ data-cites="Folio3SemanticVsInstance"></span></figcaption>
 
 ## Approach
 
-<figure id="fig:segmentation-pipeline">
-<img src="figures/QCANet_architecture.png" />
-<figcaption>Segmentation Pipeline</figcaption>
-</figure>
-
 #### QCANet Architecture
 
 As shown in , QCANet consists of two subnetworks: *Nuclear Segmentation
@@ -72,6 +67,11 @@ operate on the input individually, as seen in
 <a href="#fig:segmentation-pipeline" data-reference-type="autoref"
 data-reference="fig:segmentation-pipeline">[fig:segmentation-pipeline]</a>,
 and their outputs are then combined in the post processing phase.
+
+<figure id="fig:segmentation-pipeline" >
+  <img src="figures/QCANet_architecture.png" style="height:5cm" />
+  <figcaption>Segmentation Pipeline</figcaption>
+</figure>
 
 The primary objective of the NSN is to segment the nuclear regions (from
 the background) in the images. In other words, it must detect all voxels
@@ -129,9 +129,8 @@ preventing over-segmentation as the flood is less likely to be affected
 by noise or artifacts.
 
 <figure id="fig:watershed">
-<img src="figures/WaterShed.png" />
-<figcaption>Marker Based Water Shed <span class="citation"
-data-cites="MathWorksWatershed"></span></figcaption>
+  <img src="figures/WaterShed.png" style="height:5cm" />
+  <figcaption>Marker Based Water Shed <span class="citation" data-cites="MathWorksWatershed"></span></figcaption>
 </figure>
 
 ## Experiment Setup
@@ -231,14 +230,14 @@ $$MUCov = \sum_{i}^{N_j} \frac{1}{N_j}  \max_j IoU(y_i, y_j^*)
 The two figures below show the learning curves for the NSN and the NDN
 training and validation loss per epoch, respectively.
 
-<img src="figures/nsn_loss.jpeg" alt="image" />
-<img src="figures/ndn_loss.jpeg" alt="image" />
+<img src="figures/nsn_loss.jpeg" alt="image" style="height:5cm" />
+<img src="figures/ndn_loss.jpeg" alt="image" style="height:5cm" />
 
 And below are the IoU scores over epochs for the NSN and NDN networks,
 respestively.
 
-<img src="figures/nsn_iou.jpeg" alt="image" />
-<img src="figures/ndn_iou.jpeg" alt="image" />
+<img src="figures/nsn_iou.jpeg" alt="image" style="height:5cm" />
+<img src="figures/ndn_iou.jpeg" alt="image" style="height:5cm" />
 
 #### Quantitative results compared to the original paper
 
@@ -271,19 +270,15 @@ paper, we are quite happy with the way the output images look, in a
 visual sense. Here is an example of the pipeline running with all
 intermediate images, for an image in the test set:
 
-<img src="figures/dl_2.png" alt="image" />
-<img src="figures/dl_3.png" alt="image" />
-<img src="figures/dl_4.png" alt="image" />
-<img src="figures/dl_1.png" alt="image" />
-<img src="figures/dl_5.png" alt="image" />
+<img src="figures/dl_2.png" alt="image" style="height:5cm" />
+<img src="figures/dl_3.png" alt="image" style="height:5cm" />
+<img src="figures/dl_4.png" alt="image" style="height:5cm" />
+<img src="figures/dl_1.png" alt="image" style="height:5cm" />
+<img src="figures/dl_5.png" alt="image" style="height:5cm" />
 
-![image](Figures/3D_NSN_output.png){width="\\textwidth"}
-![image](Figures/3D_NDN_output.png){width="\\textwidth"}
-![image](Figures/3D_watershed_output.png){width="\\textwidth"}
-
-<img src="figures/3D_NSN_output.png" alt="image" />
-<img src="figures/3D_NDN_output.png" alt="image" />
-<img src="figures/3D_watershed_output.png" alt="image" />
+<img src="figures/3D_NSN_output.png" alt="image" style="height:5cm" />
+<img src="figures/3D_NDN_output.png" alt="image" style="height:5cm" />
+<img src="figures/3D_watershed_output.png" alt="image" style="height:5cm" />
 
 ## Discussion
 
@@ -298,7 +293,7 @@ Implementing the NSN and the NDN were not daunting tasks, and we were
 able to get the architectures correct within a few hours. The most time
 consuming task was training, which required us to tweak parameters
 multiple times, run multiple training runs that stop early, and
-experiment until we got satisfactory training curves. Ironically,
+experiment until we got satisfactory training curves. Ironically, Tokuoka et al. 
 claimed QCANet would relieve this heuristic, application-dependent
 hyperparameter search.
 
@@ -308,7 +303,7 @@ number of training instances in our dataset and most likely led to even
 better results. This is most likely the biggest gap between our
 implementation and the paper’s implementation. Further inconsistencies
 that we took in order to get a working result instead of a very precise
-one, are discussed in the following section ().
+one, are discussed in the following section.
 
 #### Reproducibility Assessment
 
@@ -394,6 +389,13 @@ to reproduce the method successfully. However, a lot of choices had to
 be made by us instead of blindly following the choices of the authors,
 and an exact reproduction is therefore not very easy to achieve.
 
+## References
+
+[^qcanet]: Y. Tokuoka et al., ‘3D convolutional neural networks-based segmentation to acquire quantitative criteria of the nucleus during mouse embryogenesis’, npj Syst Biol Appl, vol. 6, no. 1, p. 32, Oct. 2020, doi: 10.1038/s41540-020-00152-8.
+
+[^3dunet]: Ö. Çiçek, A. Abdulkadir, S. S. Lienkamp, T. Brox, and O. Ronneberger, ‘3D U-Net: Learning Dense Volumetric Segmentation from Sparse Annotation’. arXiv, Jun. 21, 2016. Accessed: Apr. 10, 2024. [Online]. Available: http://arxiv.org/abs/1606.06650
+
+
 
 <!-- # Task Distribution
 
@@ -406,4 +408,3 @@ and an exact reproduction is therefore not very easy to achieve.
 
 Tasks assigned to each team member
 
-[^1]: Employee Number -->
