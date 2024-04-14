@@ -1,4 +1,5 @@
-> [!NOTE] A blog post for this replication is available [here](https://jvanzyl1.github.io/3D-nuclei-segmentation-reproduction/README.html#fig:segmentation-pipeline). 
+> [!NOTE]
+> A blog post for this replication is available [here](https://jvanzyl1.github.io/3D-nuclei-segmentation-reproduction/README.html#fig:segmentation-pipeline). 
 
 ## 3D Convolutional neural networks-based segmentation to acquire quantitative criteria of the nucleus during mouse embryogenesis.
 Tags: `3D image segmentation`, `Mask R-CNN`, `fluorescense microscopy`, `live cell data`
