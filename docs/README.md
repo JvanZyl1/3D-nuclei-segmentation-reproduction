@@ -24,11 +24,11 @@ decreases along the z-axis, because the innermost part of the embryo is
 not fully transparent. Furthermore, fluorophore fading causes decreasing
 fluorescence intensity with time.
 
-Tokuoka et al.[^qcanet] propose QCANet to generalise and improve segmentation accuracy of 3D
+Tokuoka et al.[^1] propose QCANet to generalise and improve segmentation accuracy of 3D
 fluorescence microscopic images. They show that by decomposing the task
 into separate convolutional neural networks (CNNs) responsible for
 semantic and instance segmentation, they can outperform the 3D U-Net
-baseline[^3dunet]. In this post, we try to replicate their results and highlight
+baseline[^2]. In this post, we try to replicate their results and highlight
 discrepancies in our reproduction.
 
 ## Background
@@ -381,20 +381,6 @@ and an exact reproduction is therefore not very easy to achieve.
 
 ## References
 
-[^qcanet]: Y. Tokuoka et al., ‘3D convolutional neural networks-based segmentation to acquire quantitative criteria of the nucleus during mouse embryogenesis’, npj Syst Biol Appl, vol. 6, no. 1, p. 32, Oct. 2020, doi: 10.1038/s41540-020-00152-8.
+[^1]: Y. Tokuoka et al., ‘3D convolutional neural networks-based segmentation to acquire quantitative criteria of the nucleus during mouse embryogenesis’, npj Syst Biol Appl, vol. 6, no. 1, p. 32, Oct. 2020, doi: 10.1038/s41540-020-00152-8.
 
-[^3dunet]: Ö. Çiçek, A. Abdulkadir, S. S. Lienkamp, T. Brox, and O. Ronneberger, ‘3D U-Net: Learning Dense Volumetric Segmentation from Sparse Annotation’. arXiv, Jun. 21, 2016. Accessed: Apr. 10, 2024. [Online]. Available: http://arxiv.org/abs/1606.06650
-
-
-
-<!-- # Task Distribution
-
-| **Member** | **Tasks**                                                                                           |
-|:-----------|:----------------------------------------------------------------------------------------------------|
-| Dani       | Building NSN and NDN network, training them, implementing pre-processing in Kaggle, dice loss. Blog |
-| Ugo        | Pre-Processing, Metrics, Watershed, Graph visualisation. Blog                                       |
-| Jonathan   | Pre-Processing, Metrics, Training NDN. Blog. Help with watershed                                    |
-| Aral       | Poster and Blog. Original QCANET implementation & original metrics attempt.                         |
-
-Tasks assigned to each team member
-
+[^2]: Ö. Çiçek, A. Abdulkadir, S. S. Lienkamp, T. Brox, and O. Ronneberger, ‘3D U-Net: Learning Dense Volumetric Segmentation from Sparse Annotation’. arXiv, Jun. 21, 2016. Accessed: Apr. 10, 2024. \[Online\]. Available: http://arxiv.org/abs/1606.06650
