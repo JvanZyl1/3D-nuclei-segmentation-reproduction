@@ -2,7 +2,6 @@ from cell_dataset import CellDataset
 from metrics import Metrics, IoU, SEG, MuCov
 import os, torch
 from unet_3d import NSN, NDN
-import cv2 as cv
 import numpy as np
 import matplotlib.pyplot as plt
 import tifffile
