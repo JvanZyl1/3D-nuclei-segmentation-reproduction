@@ -294,11 +294,6 @@ paper, we are quite happy with the way the output images look, in a
 visual sense. Here are some examples, for different images in the test
 set:
 
-
-![image](Figures/3D_NSN_output.png){width="\\textwidth"}
-![image](Figures/3D_NDN_output.png){width="\\textwidth"}
-![image](Figures/3D_watershed_output.png){width="\\textwidth"}
-
 # Discussion {#sec:discussion}
 
 ## Limitations {#sec:limitations}
