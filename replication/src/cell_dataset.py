@@ -25,6 +25,7 @@ class PreProcessCellDataset(torch.utils.data.Dataset):
         return len(self.image_paths)
     
     def __getitem__(self, idx):
+        self.padding = 24
         ##do the same as in CellDataset but without the preprocessing
         image = tifffile.imread(self.image_paths[idx])
         mask = tifffile.imread(self.mask_paths[idx])
@@ -34,6 +35,10 @@ class PreProcessCellDataset(torch.utils.data.Dataset):
 
         image = torch.from_numpy(image)
         mask = torch.from_numpy(mask)
+        
+        image = torch.nn.functional.pad(image, (self.padding, self.padding, self.padding, self.padding, self.padding, self.padding), mode='reflect')
+        mask = torch.nn.functional.pad(mask, (self.padding, self.padding, self.padding, self.padding, self.padding, self.padding), mode='reflect')
+
 
         if len(image.shape) == 3:
             image = image.unsqueeze(0)
@@ -45,8 +50,7 @@ class PreProcessCellDataset(torch.utils.data.Dataset):
     def __iter__(self):
         for i in range(len(self)):
             yield self[i]
-
-    ##check images same size
+            
     def check_images_same_size(self):
         prev_image_name = None
         for i in range(len(self)):
@@ -61,23 +65,6 @@ class PreProcessCellDataset(torch.utils.data.Dataset):
                     return False
                 prev_image_name = image_name
         return True
-
-    def print_image(self, image, slice_index=0):
-        if len(image.shape) == 4:
-            image = image.squeeze(0)
-        image_slice = image[slice_index]
-        plt.imshow(image_slice, cmap='gray')
-        plt.show()
-
-    def print_image_3D(self, image, slice_index=0):
-        if len(image.shape) == 4:
-            image = image.squeeze(0)
-        def func(slice_index):
-            #returns slics of image
-            return image[int(slice_index)]
-        n_ind = image.shape[0]
-        control = iplt.imshow(func, slice_index=(0, n_ind-1), cmap='gray')
-        plt.show()
 
 
 
@@ -106,24 +93,17 @@ class CellDataset(torch.utils.data.Dataset):
 
         image_min = image.min()
         image_max = image.max()
-        image = (image - image_min) / (image_max - image_min)
+        image = image / image_max
+        mask = mask / np.max(mask)
 
-        mask_min = mask.min()
-        mask_max = mask.max()
-        mask = (mask - mask_min) / (mask_max - mask_min)
-
-        
-        desired_height, desired_width = 140, 140
+        desired_height, desired_width = 139, 140
         image = DatasetUtils().apply_padding(image, desired_height, desired_width)
         mask = DatasetUtils.apply_padding(mask, desired_height, desired_width)
         
         image = torch.from_numpy(image)
         mask = torch.from_numpy(mask)
 
-        image, mask = self.interpolate(image, type='bicubic'), self.interpolate(mask, type='nearest')
-        #mirror padding
-        image = torch.nn.functional.pad(image, (self.padding, self.padding, self.padding, self.padding), mode='reflect')    
-        mask = torch.nn.functional.pad(mask, (self.padding, self.padding, self.padding, self.padding), mode='reflect')
+#         image, mask = self.interpolate(image, type='bicubic'), self.interpolate(mask, type='nearest')
         if len(image.shape) == 3:
             image = image.unsqueeze(0)
         if len(mask.shape) == 3:
@@ -147,8 +127,12 @@ class CellDataset(torch.utils.data.Dataset):
         if type == 'nearest':
             #use nearest interpolation for resizing mask to avoid having pixels with values between 0 and 1
             img_resized = scipy.ndimage.zoom(image, (scale_factor, 1, 1), order=0)
-            img_resized = torch.from_numpy(img_resized).unsqueeze(0)#convert to tensor, re-add channel dimension    
+            img_resized = torch.from_numpy(img_resized).unsqueeze(0)#convert to tensor, re-add channel dimension
+            img_resized = self.threshold_to_binary(img_resized)
             return img_resized #shape: [1, 112, 139, 140]
+        
+    def threshold_to_binary(self, tensor):
+        return (tensor >= 0.5).float()
             
         
     def print_image(self, image, slice_index=0):
@@ -167,26 +151,6 @@ class CellDataset(torch.utils.data.Dataset):
         n_ind = image.shape[0]
         control = iplt.imshow(func, slice_index=(0, n_ind-1), cmap='gray')
         plt.show()
-
-    def augment_data(self, image, mask):
-        # For each image in the dataset, we want 4 final images:
-        # 1. Original image
-        # 2. Image flipped along x-axis
-        # 3. Image flipped along y-axis
-        # 4. Image flipped along x-axis and y-axis
-        # Image & Mask : [C, Z, Y, X]
-        image_flipped_x = torch.flip(image, [3])
-        image_flipped_y = torch.flip(image, [2])
-        image_flipped_xy = torch.flip(image, [2, 3])
-
-        mask_flipped_x = torch.flip(mask, [3])
-        mask_flipped_y = torch.flip(mask, [2])
-        mask_flipped_xy = torch.flip(mask, [2, 3])
-
-        images = [image, image_flipped_x, image_flipped_y, image_flipped_xy]
-
-        masks = [mask, mask_flipped_x, mask_flipped_y, mask_flipped_xy]
-        return images, masks
 
 
 

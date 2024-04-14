@@ -14,13 +14,16 @@ class DiceLoss(nn.Module):
 
     def forward(self, predictions, targets):
         smooth = 1e-6
+        predictions = torch.sigmoid(predictions)
 
-        intersection = torch.sum(predictions * targets)
+        pred_flat = predictions.contiguous().view(-1)
+        target_flat = targets.contiguous().view(-1)
 
-        dice_score = (2. * intersection + smooth) / (
-                torch.sum(predictions) + torch.sum(targets) + smooth)
+        intersection = (pred_flat * target_flat).sum()
+        dice_coeff = (2. * intersection + smooth) / (pred_flat.sum() + target_flat.sum() + smooth)
 
-        return 1 - dice_score
+        dice_loss = 1 - dice_coeff
+        return dice_loss.mean()
     
 def IoU(predictions, targets):
     intersection = torch.sum(predictions * targets)
