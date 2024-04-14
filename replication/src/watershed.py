@@ -84,7 +84,7 @@ if __name__ == "__main__":
 
 
     #note: model trained on CUDA, use map_location input to load model on CPU
-    ndn_model.load_state_dict(torch.load("replication/src/ndn (1).pth", map_location=torch.device('cpu')))
+    ndn_model.load_state_dict(torch.load("replication/src/ndn.pth", map_location=torch.device('cpu')))
     nsn_model.load_state_dict(torch.load("replication/src/nsn.pth", map_location=torch.device('cpu')))
     #get test images and test ground truth (QCANet)
     images_dir = os.path.join("data", "images", "test", "Images")
@@ -127,7 +127,7 @@ if __name__ == "__main__":
 
         markers = run_watershed_3d(nsn_output, ndn_output)
         
-        plot = False
+        plot = True
         if plot:
             plot_3D_markers(markers, mask, data_type='Watershed')
 
