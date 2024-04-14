@@ -42,17 +42,19 @@ cat, trees, sky and ground are shown. Whereas **instance** segmentation
 partitions this class into distinct instances. E.g. divides a group of
 people into individuals.
 
-<figure id="fig:instance-segmentation">
-<figure id="fig:semantic-segmentation">
-<img src="figures/SEGMENT_SEMANTIC.png" style="height:3cm" />
-<figcaption>Semantic Segmentation <span class="citation"
-data-cites="SemanticSeg"></span></figcaption>
-</figure>
-<figure id="fig:instance-segmentation">
-<img src="figures/INSTANCESEGMENTATION.png" style="height:3cm" />
-<figcaption>Instance and Semantic Segmentation <span class="citation"
-data-cites="Folio3SemanticVsInstance"></span></figcaption>
-</figure>
+<figure>
+  <figure id="fig:semantic-segmentation">
+    <img src="figures/SEGMENT_SEMANTIC.png" style="height:3cm" />
+    <figcaption>Semantic Segmentation <span class="citation"
+    data-cites="SemanticSeg"></span></figcaption>
+  </figure>
+
+  <figure id="fig:instance-segmentation">
+    <img src="figures/INSTANCESEGMENTATION.png" style="height:3cm" />
+    <figcaption>Instance and Semantic Segmentation <span class="citation"
+    data-cites="Folio3SemanticVsInstance"></span></figcaption>
+  </figure>
+
 <figcaption>Instance and Semantic Segmentation <span class="citation"
 data-cites="Folio3SemanticVsInstance"></span></figcaption>
 </figure>
@@ -397,7 +399,7 @@ to reproduce the method successfully. However, a lot of choices had to
 be made by us instead of blindly following the choices of the authors,
 and an exact reproduction is therefore not very easy to achieve.
 
-# Task Distribution
+<!-- # Task Distribution
 
 | **Member** | **Tasks**                                                                                           |
 |:-----------|:----------------------------------------------------------------------------------------------------|
@@ -408,4 +410,4 @@ and an exact reproduction is therefore not very easy to achieve.
 
 Tasks assigned to each team member
 
-[^1]: Employee Number
+[^1]: Employee Number -->
