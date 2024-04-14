@@ -1,13 +1,10 @@
 ---
-author:
-- Ugo Coveliers-Munzi (5007631)
-- Aral de Moor (931604[^1] )
-- Dani Rogmans (4885279)
-- Jonathan van Zyl (5039738)
-bibliography:
-- main.bib
-title: Segmenting
-  quantitative criteria of the nucleus during mouse embryogenesis
+authors:
+- Ugo Coveliers-Munzi
+- Aral de Moor 
+- Dani Rogmans 
+- Jonathan van Zyl 
+title: 3D Time-Series Cell Segmentation with CNNs
 ---
 
 # Introduction
