@@ -1,3 +1,7 @@
+
+# well github pages doesn't like this one
+paper/
+
 __pycache__/
 *.py[cod]
 *$py.class
