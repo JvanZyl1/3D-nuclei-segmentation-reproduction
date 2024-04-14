@@ -1,4 +1,4 @@
----
+<!-- ---
 author:
 - Ugo Coveliers-Munzi (5007631)
 - Aral de Moor (931604[^1])
@@ -8,7 +8,7 @@ bibliography:
 - main.bib
 title: 3D convolutional neural networks-based segmentation to acquire
   quantitative criteria of the nucleus during mouse embryogenesis
----
+--- -->
 
 # Introduction
 
